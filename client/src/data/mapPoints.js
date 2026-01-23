@@ -1,0 +1,66 @@
+export const MAP_POINTS = [
+  {
+    id: "apollonia",
+    type: "site",
+    name_sq: "Apollonia",
+    name_en: "Apollonia",
+    lat: 40.7179,
+    lng: 19.4816,
+    // klik → blog post ose faqe e dedikuar
+    to: "/blog/apollonia",
+    subtitle_sq: "Park arkeologjik / UNESCO candidate",
+    subtitle_en: "Archaeological park / UNESCO candidate",
+  },
+  {
+    id: "bylis",
+    type: "site",
+    name_sq: "Bylis",
+    name_en: "Bylis",
+    lat: 40.5436,
+    lng: 19.7219,
+    to: "/blog/bylis",
+    subtitle_sq: "Qytet antik ilir-romak",
+    subtitle_en: "Ancient Illyrian-Roman city",
+  },
+  {
+    id: "ardenica",
+    type: "monastery",
+    name_sq: "Manastiri i Ardenicës",
+    name_en: "Ardenica Monastery",
+    lat: 40.7303,
+    lng: 19.7451,
+    to: "/blog/ardenica",
+    subtitle_sq: "Monument kulture dhe pelegrinazh",
+    subtitle_en: "Cultural monument and pilgrimage",
+  },
+  {
+    id: "levan",
+    type: "village",
+    name_sq: "Levan",
+    name_en: "Levan",
+    lat: 40.6747,
+    lng: 19.4891,
+    to: "/trail",
+    subtitle_sq: "Pikë nisjeje e shtegut",
+    subtitle_en: "Trail starting point",
+  },
+  {
+    id: "shtyllas",
+    type: "village",
+    name_sq: "Shtyllas",
+    name_en: "Shtyllas",
+    lat: 40.6395,
+    lng: 19.5247,
+    to: "/trail",
+    subtitle_sq: "Segment i shtegut natyror",
+    subtitle_en: "Natural route segment",
+  },
+];
+
+export const MAP_ROUTE_POLYLINE = [
+  // Levan → Shtyllas → Ardenica → Apollonia (si “shteg” vizual)
+  [40.6747, 19.4891],
+  [40.6395, 19.5247],
+  [40.7303, 19.7451],
+  [40.7179, 19.4816],
+];

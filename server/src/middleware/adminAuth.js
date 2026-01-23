@@ -7,11 +7,11 @@ export function requireAdmin(req, res, next) {
 
     if (!token) return res.status(401).json({ message: "Missing token" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
 
-    // prano edhe role: "admin" për çdo rast
-    const isAdmin = decoded?.admin === true || decoded?.role === "admin";
-    if (!isAdmin) return res.status(403).json({ message: "Forbidden" });
+    // login po firmos { isAdmin: true }
+    if (!decoded?.isAdmin)
+      return res.status(403).json({ message: "Forbidden" });
 
     req.admin = decoded;
     next();

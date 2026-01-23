@@ -2,8 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import slugify from "slugify";
 import Post from "../models/Post.js";
-import Comment from "../models/Comment.js";
-import { requireAdmin } from "../middleware/auth.js";
+import { requireAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
@@ -11,33 +10,24 @@ const router = express.Router();
  * POST /api/admin/login
  */
 router.post("/admin/login", async (req, res) => {
-  const email = String(req.body?.email || "")
-    .trim()
-    .toLowerCase();
-  const password = String(req.body?.password || "").trim();
-
-  const ok =
-    email ===
-      String(process.env.ADMIN_EMAIL || "")
-        .trim()
-        .toLowerCase() &&
-    password === String(process.env.ADMIN_PASSWORD || "").trim();
-
+  const { email, password } = req.body || {};
   if (!email || !password)
     return res.status(400).json({ message: "Missing credentials" });
+
+  const ok =
+    email === process.env.ADMIN_EMAIL &&
+    password === process.env.ADMIN_PASSWORD;
   if (!ok)
     return res.status(401).json({ message: "Invalid email or password" });
 
   const token = jwt.sign(
-    { admin: true, role: "admin", email },
-    process.env.JWT_SECRET,
+    { isAdmin: true, email }, // ✅ kjo duhet të përputhet me requireAdmin
+    process.env.JWT_SECRET || "dev_secret",
     { expiresIn: "7d" },
   );
 
-  res.json({ ok: true, token });
+  res.json({ token });
 });
-
-/* ---------------- POSTS ---------------- */
 
 /**
  * GET /api/admin/posts
@@ -65,13 +55,9 @@ router.get("/admin/posts/:id", requireAdmin, async (req, res) => {
  */
 router.post("/admin/posts", requireAdmin, async (req, res) => {
   const body = req.body || {};
-
   const baseSlug = slugify(
     body.slug || body.title_sq || body.title_en || "post",
-    {
-      lower: true,
-      strict: true,
-    },
+    { lower: true, strict: true },
   );
 
   let slug = baseSlug;
@@ -125,6 +111,7 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
   post.content_en = body.content_en ?? post.content_en;
   post.coverImageUrl = body.coverImageUrl ?? post.coverImageUrl;
   post.category = body.category ?? post.category;
+
   if (Array.isArray(body.tags)) post.tags = body.tags;
 
   if (body.status === "published" && post.status !== "published") {
@@ -145,51 +132,6 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
 router.delete("/admin/posts/:id", requireAdmin, async (req, res) => {
   const post = await Post.findByIdAndDelete(req.params.id);
   if (!post) return res.status(404).json({ message: "Not found" });
-  res.json({ ok: true });
-});
-
-/* ---------------- COMMENTS (moderim) ---------------- */
-
-/**
- * GET /api/admin/comments?status=pending|approved|all
- */
-router.get("/admin/comments", requireAdmin, async (req, res) => {
-  const status = String(req.query.status || "pending");
-  const filter =
-    status === "all"
-      ? {}
-      : { status: status === "approved" ? "approved" : "pending" };
-
-  const items = await Comment.find(filter)
-    .sort({ createdAt: -1 })
-    .select("postSlug name email message status emailVerified createdAt");
-
-  res.json({ items });
-});
-
-/**
- * POST /api/admin/comments/:id/approve
- */
-router.post("/admin/comments/:id/approve", requireAdmin, async (req, res) => {
-  const c = await Comment.findById(req.params.id);
-  if (!c) return res.status(404).json({ message: "Not found" });
-
-  // vetëm nëse email është verifikuar, e bëjmë approved
-  if (!c.emailVerified) {
-    return res.status(400).json({ message: "Email not verified" });
-  }
-
-  c.status = "approved";
-  await c.save();
-  res.json({ ok: true });
-});
-
-/**
- * DELETE /api/admin/comments/:id
- */
-router.delete("/admin/comments/:id", requireAdmin, async (req, res) => {
-  const c = await Comment.findByIdAndDelete(req.params.id);
-  if (!c) return res.status(404).json({ message: "Not found" });
   res.json({ ok: true });
 });
 

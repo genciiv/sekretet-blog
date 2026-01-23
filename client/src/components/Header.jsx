@@ -22,6 +22,7 @@ function LangBtn({ active, children, onClick }) {
 export default function Header() {
   const { lang, setLanguage, t } = useI18n();
   const loc = useLocation();
+  const isAdmin = loc.pathname.startsWith("/admin");
 
   const nav = [
     { to: "/", label: t("nav.home") },
@@ -29,11 +30,10 @@ export default function Header() {
     { to: "/antiquity", label: t("nav.antiquity") },
     { to: "/blog", label: t("nav.blog") },
     { to: "/gallery", label: t("nav.gallery") },
+    { to: "/map", label: lang === "en" ? "Map" : "Harta" },
     { to: "/partners", label: t("nav.partners") },
     { to: "/contact", label: t("nav.contact") },
   ];
-
-  const isAdmin = loc.pathname.startsWith("/admin");
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur">
