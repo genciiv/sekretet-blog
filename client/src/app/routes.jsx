@@ -6,11 +6,13 @@ import Gallery from "../pages/Gallery";
 import Partners from "../pages/Partners";
 import Contact from "../pages/Contact";
 import PostDetails from "../pages/PostDetails";
+import VerifyEmail from "../pages/VerifyEmail";
 import NotFound from "../pages/NotFound";
 
 import AdminLogin from "../pages/admin/AdminLogin";
 import AdminPosts from "../pages/admin/AdminPosts";
 import AdminPostEditor from "../pages/admin/AdminPostEditor";
+import AdminComments from "../pages/admin/AdminComments";
 
 export const routes = [
   { path: "/", element: <Home /> },
@@ -18,14 +20,15 @@ export const routes = [
   { path: "/antiquity", element: <Antiquity /> },
   { path: "/blog", element: <Blog /> },
   { path: "/blog/:slug", element: <PostDetails /> },
+  { path: "/verify-email", element: <VerifyEmail /> },
   { path: "/gallery", element: <Gallery /> },
   { path: "/partners", element: <Partners /> },
   { path: "/contact", element: <Contact /> },
 
-  // Admin
   { path: "/admin/login", element: <AdminLogin /> },
   { path: "/admin/posts", element: <AdminPosts /> },
   { path: "/admin/posts/:id", element: <AdminPostEditor /> },
+  { path: "/admin/comments", element: <AdminComments /> },
 
   { path: "*", element: <NotFound /> }
 ];

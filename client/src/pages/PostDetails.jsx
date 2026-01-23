@@ -5,6 +5,7 @@ import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
 import { apiGet } from "../lib/api";
 import { useI18n } from "../i18n/i18n.jsx";
+import CommentsSection from "../components/Comments/CommentsSection";
 
 export default function PostDetails() {
   const { slug } = useParams();
@@ -21,13 +22,13 @@ export default function PostDetails() {
         const data = await apiGet(`/api/posts/${slug}`);
         setPost(data);
       } catch (e) {
-        setErr("Postimi nuk u gjet.");
+        setErr(lang === "en" ? "Post not found." : "Postimi nuk u gjet.");
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [slug]);
+  }, [slug, lang]);
 
   if (loading) {
     return (
@@ -96,16 +97,7 @@ export default function PostDetails() {
         </Card>
 
         <div className="mt-10">
-          <Card className="p-6">
-            <div className="text-sm font-semibold text-zinc-900">
-              {lang === "en" ? "Comments" : "Komente"}
-            </div>
-            <p className="mt-2 text-sm text-zinc-600">
-              {lang === "en"
-                ? "Comments module will be added after the blog is stable (email verified + admin approval)."
-                : "Komentet do shtohen pasi të stabilizohet blogu (email verify + admin approve)."}
-            </p>
-          </Card>
+          <CommentsSection postSlug={post.slug} />
         </div>
       </Section>
     </main>

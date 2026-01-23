@@ -1,8 +1,11 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
+import commentRoutes from "./routes/comments.js";
+import adminCommentRoutes from "./routes/adminComments.js";
 
 const app = express();
 
@@ -16,5 +19,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api", publicRoutes);
 app.use("/api", adminRoutes);
+app.use("/api", commentRoutes);
+app.use("/api", adminCommentRoutes);
 
 export default app;
