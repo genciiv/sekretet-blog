@@ -8,6 +8,7 @@ function cn(...classes) {
 const links = [
   { to: "/admin/posts", label: "Posts" },
   { to: "/admin/comments", label: "Comments" },
+  { to: "/admin/gallery", label: "Gallery" },
 ];
 
 export default function AdminLayout() {

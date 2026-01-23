@@ -9,12 +9,9 @@ export function requireAdmin(req, res, next) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // prano si "isAdmin" (siç e gjeneron login) ose "admin"
-    const ok =
-      decoded?.isAdmin === true ||
-      decoded?.admin === true ||
-      decoded?.role === "admin";
-    if (!ok) return res.status(403).json({ message: "Forbidden" });
+    // prano edhe role: "admin" për çdo rast
+    const isAdmin = decoded?.admin === true || decoded?.role === "admin";
+    if (!isAdmin) return res.status(403).json({ message: "Forbidden" });
 
     req.admin = decoded;
     next();
