@@ -1,44 +1,66 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const TOKEN_KEY = "admin_token";
 
-function getToken() {
-  return localStorage.getItem("admin_token") || "";
+// -------- Token helpers --------
+export function setAdminToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
+export function getAdminToken() {
+  return localStorage.getItem(TOKEN_KEY) || "";
+}
+
+export function hasAdminToken() {
+  return !!getAdminToken();
+}
+
+// përdoret nga AdminLayout
+export function adminLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// përdoret nga AdminPosts (kompatibilitet)
+export function clearAdminToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// -------- Public API --------
 export async function apiGet(path) {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-export async function apiAuthGet(path) {
+export async function apiSend(path, method, body) {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${getToken()}` }
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// -------- Admin API (Bearer token) --------
+export async function apiAuthGet(path) {
+  const token = getAdminToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function apiAuthSend(path, method, body) {
+  const token = getAdminToken();
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(body || {})
+    body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
-}
-
-export function setAdminToken(token) {
-  localStorage.setItem("admin_token", token);
-}
-
-export function clearAdminToken() {
-  localStorage.removeItem("admin_token");
-}
-
-export function hasAdminToken() {
-  return !!getToken();
 }

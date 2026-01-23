@@ -9,12 +9,15 @@ import PostDetails from "../pages/PostDetails";
 import VerifyEmail from "../pages/VerifyEmail";
 import NotFound from "../pages/NotFound";
 
+// Admin pages
+import AdminLayout from "../pages/admin/AdminLayout";
 import AdminLogin from "../pages/admin/AdminLogin";
 import AdminPosts from "../pages/admin/AdminPosts";
 import AdminPostEditor from "../pages/admin/AdminPostEditor";
 import AdminComments from "../pages/admin/AdminComments";
 
 export const routes = [
+  // Public
   { path: "/", element: <Home /> },
   { path: "/trail", element: <Trail /> },
   { path: "/antiquity", element: <Antiquity /> },
@@ -25,10 +28,21 @@ export const routes = [
   { path: "/partners", element: <Partners /> },
   { path: "/contact", element: <Contact /> },
 
+  // Admin login (pa layout)
   { path: "/admin/login", element: <AdminLogin /> },
-  { path: "/admin/posts", element: <AdminPosts /> },
-  { path: "/admin/posts/:id", element: <AdminPostEditor /> },
-  { path: "/admin/comments", element: <AdminComments /> },
 
-  { path: "*", element: <NotFound /> }
+  // Admin (me sidebar layout)
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <AdminPosts /> }, // /admin -> posts
+      { path: "posts", element: <AdminPosts /> },
+      { path: "posts/:id", element: <AdminPostEditor /> },
+      { path: "comments", element: <AdminComments /> },
+    ],
+  },
+
+  // 404
+  { path: "*", element: <NotFound /> },
 ];

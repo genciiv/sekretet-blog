@@ -2,7 +2,7 @@ import { useState } from "react";
 import PageHeader from "../../components/sections/PageHeader";
 import Section from "../../components/sections/Section";
 import Card from "../../components/ui/Card";
-import { apiAuthSend, setAdminToken } from "../../lib/api";
+import { apiSend, setAdminToken } from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminLogin() {
@@ -16,7 +16,13 @@ export default function AdminLogin() {
     try {
       setErr("");
       setLoading(true);
-      const data = await apiAuthSend("/api/admin/login", "POST", { email, password });
+
+      // LOGIN nuk përdor token -> apiSend (public)
+      const data = await apiSend("/api/admin/login", "POST", {
+        email,
+        password,
+      });
+
       setAdminToken(data.token);
       nav("/admin/posts");
     } catch (e) {
@@ -28,7 +34,11 @@ export default function AdminLogin() {
 
   return (
     <main>
-      <PageHeader kicker="Admin" title="Login" subtitle="Hyr për të menaxhuar postimet." />
+      <PageHeader
+        kicker="Admin"
+        title="Login"
+        subtitle="Hyr për të menaxhuar postimet."
+      />
 
       <Section title="" subtitle="">
         <Card className="p-6 max-w-xl">
@@ -41,8 +51,11 @@ export default function AdminLogin() {
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm outline-none focus:border-zinc-400"
               />
             </div>
+
             <div>
-              <label className="text-sm font-medium text-zinc-900">Password</label>
+              <label className="text-sm font-medium text-zinc-900">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -53,7 +66,12 @@ export default function AdminLogin() {
 
             {err ? <div className="text-sm text-red-600">{err}</div> : null}
 
-            <button className="btn btn-primary" onClick={onSubmit} disabled={loading}>
+            <button
+              className="btn btn-primary"
+              onClick={onSubmit}
+              disabled={loading}
+              type="button"
+            >
               {loading ? "Loading..." : "Login"}
             </button>
           </div>
