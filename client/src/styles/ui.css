@@ -1,0 +1,41 @@
+@layer components {
+  .container-page {
+    @apply mx-auto max-w-6xl px-4;
+  }
+
+  .card {
+    @apply rounded-2xl border border-zinc-200 bg-white shadow-sm;
+  }
+
+  .card-pad {
+    @apply p-6;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition;
+  }
+
+  .btn-primary {
+    @apply bg-zinc-900 text-white hover:bg-zinc-800;
+  }
+
+  .btn-ghost {
+    @apply border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700;
+  }
+
+  .muted {
+    @apply text-zinc-600;
+  }
+
+  .title {
+    @apply text-2xl font-semibold text-zinc-900;
+  }
+
+  .subtitle {
+    @apply mt-2 text-zinc-600;
+  }
+}

@@ -1,87 +1,105 @@
-import { useI18n } from "../i18n/i18n";
 import { Link } from "react-router-dom";
+import { useI18n } from "../i18n/i18n.jsx";
+import Container from "../components/ui/Container";
+import Card from "../components/ui/Card";
+import Section from "../components/sections/Section";
 
 export default function Home() {
   const { t } = useI18n();
 
   return (
     <main>
+      {/* HERO */}
       <section className="bg-zinc-50">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-2 md:items-center">
+        <Container className="grid gap-10 py-14 md:grid-cols-2 md:items-center">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 md:text-5xl">
+            <div className="badge">Portal turistik-kulturor</div>
+
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-zinc-900 md:text-5xl">
               {t.hero.title}
             </h1>
+
             <p className="mt-4 text-lg text-zinc-600">{t.hero.subtitle}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/trail"
-                className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800"
-              >
+              <Link className="btn btn-primary" to="/trail">
                 {t.hero.cta1}
               </Link>
-              <Link
-                to="/antiquity"
-                className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50"
-              >
+              <Link className="btn btn-ghost" to="/antiquity">
                 {t.hero.cta3}
               </Link>
-              <a
-                href="#map"
-                className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50"
-              >
+              <a className="btn btn-ghost" href="#map">
                 {t.hero.cta2}
               </a>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-2">
+              <span className="badge">Levan</span>
+              <span className="badge">Shtyllas</span>
+              <span className="badge">Apolloni</span>
+              <span className="badge">Antikitet</span>
+              <span className="badge">Shteg</span>
             </div>
           </div>
 
           <div className="relative">
             <div className="aspect-[4/3] w-full rounded-3xl border border-zinc-200 bg-white shadow-sm" />
-            <div className="absolute -bottom-5 -left-5 hidden h-28 w-48 rounded-2xl border border-zinc-200 bg-white shadow-sm md:block" />
+            <div className="pointer-events-none absolute -bottom-5 -left-5 hidden h-28 w-52 rounded-2xl border border-zinc-200 bg-white shadow-sm md:block" />
           </div>
-        </div>
+        </Container>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      {/* 3 Cards */}
+      <Section title="Përmbledhje" subtitle="Çfarë do gjesh në portal">
         <div className="grid gap-4 md:grid-cols-3">
-          {[
-            {
-              title: "Antikiteti",
-              desc: "Apollonia, Byllis, shtresat historike.",
-            },
-            {
-              title: "Shtegu",
-              desc: "Itinerar, etapat, këshilla për vizitorët.",
-            },
-            {
-              title: "Trashëgimia",
-              desc: "Natyrë, komunitet, kujtesë kulturore.",
-            },
-          ].map((c) => (
-            <div
-              key={c.title}
-              className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
-            >
-              <div className="text-sm font-semibold text-zinc-900">
-                {c.title}
-              </div>
-              <p className="mt-2 text-sm text-zinc-600">{c.desc}</p>
-            </div>
-          ))}
-        </div>
+          <Card className="p-6">
+            <div className="text-sm font-semibold text-zinc-900">Antikiteti</div>
+            <p className="mt-2 text-sm text-zinc-600">
+              Apollonia, Byllis dhe shtresat historike të zonës.
+            </p>
+            <Link to="/antiquity" className="mt-4 inline-flex text-sm font-semibold text-zinc-900 hover:underline">
+              Shiko më shumë →
+            </Link>
+          </Card>
 
-        <div
-          id="map"
-          className="mt-10 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm"
-        >
-          <div className="text-sm font-semibold text-zinc-900">Harta</div>
-          <p className="mt-2 text-sm text-zinc-600">
-            Këtu do vendosim hartën me pika (Apollonia, Byllis, Levan, Shtyllas)
-            në Hapin 2.
-          </p>
-          <div className="mt-4 aspect-[16/7] w-full rounded-2xl bg-zinc-50" />
+          <Card className="p-6">
+            <div className="text-sm font-semibold text-zinc-900">Shtegu</div>
+            <p className="mt-2 text-sm text-zinc-600">
+              Itinerar, etapa, këshilla për vizitorët dhe hartë.
+            </p>
+            <Link to="/trail" className="mt-4 inline-flex text-sm font-semibold text-zinc-900 hover:underline">
+              Hap itinerarin →
+            </Link>
+          </Card>
+
+          <Card className="p-6">
+            <div className="text-sm font-semibold text-zinc-900">Blog / Story</div>
+            <p className="mt-2 text-sm text-zinc-600">
+              Artikuj, kujtesë kulturore, evente dhe materiale.
+            </p>
+            <Link to="/blog" className="mt-4 inline-flex text-sm font-semibold text-zinc-900 hover:underline">
+              Lexo postimet →
+            </Link>
+          </Card>
         </div>
+      </Section>
+
+      {/* MAP placeholder */}
+      <section id="map" className="py-12">
+        <Container>
+          <Card className="p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-zinc-900">Harta</div>
+                <p className="mt-2 text-sm text-zinc-600">
+                  Në Hapin 2 do vendosim hartën me pika dhe route të shtegut.
+                </p>
+              </div>
+              <span className="badge">Coming soon</span>
+            </div>
+            <div className="mt-5 aspect-[16/7] w-full rounded-2xl bg-zinc-50" />
+          </Card>
+        </Container>
       </section>
     </main>
   );

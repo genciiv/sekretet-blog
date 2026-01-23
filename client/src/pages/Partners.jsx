@@ -1,10 +1,26 @@
+import PageHeader from "../components/sections/PageHeader";
+import Section from "../components/sections/Section";
+import Card from "../components/ui/Card";
+
 export default function Partners() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-14">
-      <h1 className="text-2xl font-semibold text-zinc-900">Partnerët</h1>
-      <p className="mt-2 text-zinc-600">
-        Këtu do vendosim partnerët me logo dhe përshkrim.
-      </p>
+    <main>
+      <PageHeader
+        kicker="Partnerët"
+        title="Institucione & Bashkëpunëtorë"
+        subtitle="Logo, përshkrim dhe roli në projekt (placeholder)."
+      />
+
+      <Section title="Partnerët" subtitle="Placeholder">
+        <div className="grid gap-4 md:grid-cols-3">
+          {["Bashkia Fier", "ZVAP Fier", "Komuniteti"].map((x) => (
+            <Card key={x} className="p-6">
+              <div className="text-sm font-semibold text-zinc-900">{x}</div>
+              <p className="mt-2 text-sm text-zinc-600">Përshkrimi do shtohet më vonë.</p>
+            </Card>
+          ))}
+        </div>
+      </Section>
     </main>
   );
 }
