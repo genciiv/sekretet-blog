@@ -1,105 +1,113 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import PageHeader from "../components/sections/PageHeader";
 import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
-import { apiGet } from "../lib/api";
+import SEO from "../components/SEO.jsx";
 import { useI18n } from "../i18n/i18n.jsx";
-import CommentsSection from "../components/Comments/CommentsSection";
+import { apiGet } from "../lib/api.js";
+
+function stripHtml(s) {
+  return String(s || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export default function PostDetails() {
   const { slug } = useParams();
-  const { lang } = useI18n();
+  const { isSQ } = useI18n();
+
   const [post, setPost] = useState(null);
-  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
+    let ok = true;
+    (async () => {
       try {
-        setErr("");
-        setLoading(true);
         const data = await apiGet(`/api/posts/${slug}`);
-        setPost(data);
-      } catch (e) {
-        setErr(lang === "en" ? "Post not found." : "Postimi nuk u gjet.");
+        if (ok) setPost(data);
       } finally {
-        setLoading(false);
+        if (ok) setLoading(false);
       }
-    }
-    load();
-  }, [slug, lang]);
+    })();
+    return () => (ok = false);
+  }, [slug]);
 
   if (loading) {
     return (
-      <main>
-        <PageHeader kicker="Blog" title="..." subtitle="" />
-        <Section title="" subtitle="">
-          <Card className="p-6">
-            <div className="h-4 w-2/3 rounded bg-zinc-100" />
-            <div className="mt-3 h-3 w-full rounded bg-zinc-100" />
-            <div className="mt-2 h-3 w-5/6 rounded bg-zinc-100" />
-            <div className="mt-6 h-56 rounded-2xl bg-zinc-50" />
-          </Card>
-        </Section>
+      <main className="mx-auto max-w-6xl px-4 py-14">
+        <div className="text-sm text-zinc-600">Loading…</div>
       </main>
     );
   }
 
-  if (err || !post) {
+  if (!post) {
     return (
-      <main>
-        <PageHeader kicker="Blog" title="404" subtitle={err || "Not found"} />
-        <Section title="" subtitle="">
-          <Link className="btn btn-ghost" to="/blog">
-            ← {lang === "en" ? "Back to Blog" : "Kthehu te Blog"}
-          </Link>
-        </Section>
+      <main className="mx-auto max-w-6xl px-4 py-14">
+        <SEO title="Not found" description="Post not found" noindex />
+        <div className="text-sm text-zinc-600">Not found.</div>
       </main>
     );
   }
 
-  const title = lang === "en" ? post.title_en : post.title_sq;
-  const excerpt = lang === "en" ? post.excerpt_en : post.excerpt_sq;
-  const content = lang === "en" ? post.content_en : post.content_sq;
+  const title = isSQ
+    ? post.title_sq || ""
+    : post.title_en || post.title_sq || "";
+  const excerpt = isSQ
+    ? post.excerpt_sq || ""
+    : post.excerpt_en || post.excerpt_sq || "";
+  const content = isSQ
+    ? post.content_sq || ""
+    : post.content_en || post.content_sq || "";
+
+  const metaDesc = excerpt?.trim() || stripHtml(content).slice(0, 160);
+
+  // Nëse ti ruan coverImageUrl te post, e përdorim për OG
+  const ogImage = post.coverImageUrl || "/og-default.jpg";
 
   return (
     <main>
-      <PageHeader kicker={post.category || "Blog"} title={title} subtitle={excerpt} />
+      <SEO
+        title={title}
+        description={metaDesc}
+        image={ogImage}
+        canonical={`/blog/${post.slug}`}
+      />
+
+      <PageHeader
+        kicker={post.category || (isSQ ? "Blog" : "Blog")}
+        title={title}
+        subtitle={excerpt}
+      />
 
       <Section title="" subtitle="">
-        <div className="mb-6">
-          <Link className="btn btn-ghost" to="/blog">
-            ← {lang === "en" ? "Back to Blog" : "Kthehu te Blog"}
-          </Link>
-        </div>
-
-        <Card className="overflow-hidden">
+        <Card className="p-6">
+          {/* Cover image optional */}
           {post.coverImageUrl ? (
-            <div className="h-72 w-full bg-zinc-50">
-              <img src={post.coverImageUrl} alt={title} className="h-full w-full object-cover" />
-            </div>
+            <img
+              src={post.coverImageUrl}
+              alt={title}
+              className="mb-6 w-full rounded-2xl border border-zinc-200 object-cover"
+            />
           ) : null}
 
-          <div className="p-6">
-            <div className="flex flex-wrap gap-2">
-              {(post.tags || []).map((tg) => (
-                <span className="badge" key={tg}>
-                  {tg}
-                </span>
-              ))}
+          {/* Content */}
+          <article className="prose max-w-none">
+            {/* Nëse ruan HTML, mund ta përdorësh dangerouslySetInnerHTML.
+                Për tani po e shfaqim si text. */}
+            <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-800">
+              {stripHtml(content)
+                ? content
+                : isSQ
+                  ? "S’ka përmbajtje."
+                  : "No content."}
             </div>
-
-            <div className="mt-6 whitespace-pre-wrap text-sm leading-7 text-zinc-800">
-              {content || (lang === "en" ? "Content coming soon." : "Përmbajtja do shtohet më vonë.")}
-            </div>
-          </div>
+          </article>
         </Card>
-
-        <div className="mt-10">
-          <CommentsSection postSlug={post.slug} />
-        </div>
       </Section>
+
+      {/* Komentet i ke veç. Nuk i prekim këtu. */}
     </main>
   );
 }
