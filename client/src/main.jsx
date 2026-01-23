@@ -4,6 +4,10 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import App from "./app/App";
 import { I18nProvider } from "./i18n/i18n.jsx";
+import "leaflet/dist/leaflet.css";
+import "./lib/leafletIconFix";
+
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

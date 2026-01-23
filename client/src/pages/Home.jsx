@@ -3,6 +3,8 @@ import { useI18n } from "../i18n/i18n.jsx";
 import Container from "../components/ui/Container";
 import Card from "../components/ui/Card";
 import Section from "../components/sections/Section";
+import PlacesMap from "../components/Map/PlacesMap";
+import { places } from "../data/places";
 
 export default function Home() {
   const { t } = useI18n();
@@ -84,7 +86,7 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* MAP placeholder */}
+      {/* MAP */}
       <section id="map" className="py-12">
         <Container>
           <Card className="p-6">
@@ -92,12 +94,15 @@ export default function Home() {
               <div>
                 <div className="text-sm font-semibold text-zinc-900">Harta</div>
                 <p className="mt-2 text-sm text-zinc-600">
-                  Në Hapin 2 do vendosim hartën me pika dhe route të shtegut.
+                  Pika kryesore + lidhja e shtegut (Levan → Shtyllas → Apolloni).
                 </p>
               </div>
-              <span className="badge">Coming soon</span>
+              <span className="badge">OpenStreetMap</span>
             </div>
-            <div className="mt-5 aspect-[16/7] w-full rounded-2xl bg-zinc-50" />
+
+            <div className="mt-5">
+              <PlacesMap places={places} heightClass="h-[360px]" showRoute />
+            </div>
           </Card>
         </Container>
       </section>

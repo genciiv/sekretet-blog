@@ -1,30 +1,55 @@
 import PageHeader from "../components/sections/PageHeader";
 import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
+import PlacesMap from "../components/Map/PlacesMap";
+import { places } from "../data/places";
 
-export default function Trail() {
+export default function Antiquity() {
+  const antiquityPlaces = places.filter((p) => p.type === "antiquity");
+
   return (
     <main>
       <PageHeader
-        kicker="Shtegu"
-        title="Levan – Shtyllas – Apolloni"
-        subtitle="Itinerar, etapë pas etape, këshilla për vizitorët dhe hartë."
+        kicker="Antikiteti"
+        title="Antikiteti i zonës"
+        subtitle="Pika kryesore, timeline dhe hartë (UNESCO-style)."
       />
 
-      <Section title="Info të shpejta" subtitle="(do plotësohen më vonë)">
+      <Section title="Pikat kryesore" subtitle="(placeholder – do pasurohen me artikuj)">
         <div className="grid gap-4 md:grid-cols-3">
-          {["Distanca", "Kohë mesatare", "Vështirësia"].map((x) => (
+          {["Apollonia", "Byllis", "Objekte & Monumente"].map((x) => (
             <Card key={x} className="p-6">
               <div className="text-sm font-semibold text-zinc-900">{x}</div>
-              <p className="mt-2 text-sm text-zinc-600">—</p>
+              <p className="mt-2 text-sm text-zinc-600">
+                Këtu do futen përshkrime SQ/EN, foto dhe lidhje te postimet.
+              </p>
+              <div className="mt-4 h-20 rounded-xl bg-zinc-50" />
             </Card>
           ))}
         </div>
       </Section>
 
-      <Section title="Harta" subtitle="Route + pika (Hapi 2)">
+      <Section title="Harta e antikitetit" subtitle="Pika arkeologjike dhe historike">
         <Card className="p-6">
-          <div className="aspect-[16/7] w-full rounded-2xl bg-zinc-50" />
+          <PlacesMap places={antiquityPlaces} heightClass="h-[420px]" showRoute={false} />
+        </Card>
+      </Section>
+
+      <Section title="Timeline" subtitle="Shek. VI p.e.s → Romakët → Mesjeta → Sot (placeholder)">
+        <Card className="p-6">
+          <div className="grid gap-3 md:grid-cols-4">
+            {[
+              "Shek. VI p.e.s",
+              "Periudha helenistike",
+              "Periudha romake",
+              "Mesjeta / Sot",
+            ].map((x) => (
+              <div key={x} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="text-sm font-semibold text-zinc-900">{x}</div>
+                <p className="mt-2 text-sm text-zinc-600">Përmbajtja do shtohet më vonë.</p>
+              </div>
+            ))}
+          </div>
         </Card>
       </Section>
     </main>
