@@ -8,23 +8,25 @@ const router = express.Router();
 
 /**
  * POST /api/admin/login
+ * body: { email, password }
  */
 router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password)
+
+  if (!email || !password) {
     return res.status(400).json({ message: "Missing credentials" });
+  }
 
   const ok =
     email === process.env.ADMIN_EMAIL &&
     password === process.env.ADMIN_PASSWORD;
+
   if (!ok)
     return res.status(401).json({ message: "Invalid email or password" });
 
-  const token = jwt.sign(
-    { isAdmin: true, email }, // ✅ kjo duhet të përputhet me requireAdmin
-    process.env.JWT_SECRET || "dev_secret",
-    { expiresIn: "7d" },
-  );
+  const token = jwt.sign({ isAdmin: true, email }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 
   res.json({ token });
 });
@@ -36,18 +38,10 @@ router.get("/admin/posts", requireAdmin, async (req, res) => {
   const items = await Post.find({})
     .sort({ updatedAt: -1 })
     .select(
-      "slug title_sq title_en status category tags updatedAt publishedAt coverImageUrl",
+      "slug title_sq title_en excerpt_sq excerpt_en status category tags coverImageUrl publishedAt updatedAt",
     );
-  res.json({ items });
-});
 
-/**
- * GET /api/admin/posts/:id
- */
-router.get("/admin/posts/:id", requireAdmin, async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
-  res.json(post);
+  res.json({ items });
 });
 
 /**
@@ -57,7 +51,10 @@ router.post("/admin/posts", requireAdmin, async (req, res) => {
   const body = req.body || {};
   const baseSlug = slugify(
     body.slug || body.title_sq || body.title_en || "post",
-    { lower: true, strict: true },
+    {
+      lower: true,
+      strict: true,
+    },
   );
 
   let slug = baseSlug;
@@ -76,7 +73,7 @@ router.post("/admin/posts", requireAdmin, async (req, res) => {
     content_sq: body.content_sq || "",
     content_en: body.content_en || "",
     coverImageUrl: body.coverImageUrl || "",
-    category: body.category || "General",
+    category: body.category || "Antikitet",
     tags: Array.isArray(body.tags) ? body.tags : [],
     status,
     publishedAt,
@@ -92,16 +89,6 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
   const body = req.body || {};
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ message: "Not found" });
-
-  if (typeof body.slug === "string" && body.slug.trim()) {
-    const next = slugify(body.slug.trim(), { lower: true, strict: true });
-    if (next !== post.slug) {
-      const exists = await Post.findOne({ slug: next, _id: { $ne: post._id } });
-      if (exists)
-        return res.status(400).json({ message: "Slug already exists" });
-      post.slug = next;
-    }
-  }
 
   post.title_sq = body.title_sq ?? post.title_sq;
   post.title_en = body.title_en ?? post.title_en;
@@ -130,8 +117,8 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
  * DELETE /api/admin/posts/:id
  */
 router.delete("/admin/posts/:id", requireAdmin, async (req, res) => {
-  const post = await Post.findByIdAndDelete(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
+  const deleted = await Post.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: "Not found" });
   res.json({ ok: true });
 });
 

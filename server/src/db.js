@@ -1,8 +1,16 @@
 import mongoose from "mongoose";
 
-export async function connectDB(uri) {
-  if (!uri) throw new Error("MONGO_URI missing in .env");
-  mongoose.set("strictQuery", true);
-  await mongoose.connect(uri);
-  console.log("✅ MongoDB connected");
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ Missing MONGO_URI in .env");
+  process.exit(1);
 }
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => {
+    console.error("❌ Mongo error:", err.message);
+    process.exit(1);
+  });

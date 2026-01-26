@@ -1,52 +1,36 @@
 import express from "express";
 import Comment from "../models/Comment.js";
-import { requireAdmin } from "../middleware/auth.js";
+import { requireAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
 /**
- * GET /api/admin/comments?status=pending|approved|rejected
+ * GET /api/admin/comments?status=pending
  */
 router.get("/admin/comments", requireAdmin, async (req, res) => {
-  const status = (req.query.status || "pending").toString();
-  const filter = { status };
-  const items = await Comment.find(filter)
-    .sort({ createdAt: -1 })
-    .select("postSlug name email message status emailVerified createdAt");
+  const status = req.query.status;
+  const filter = status ? { status } : {};
+  const items = await Comment.find(filter).sort({ createdAt: -1 });
   res.json({ items });
 });
 
 /**
- * PUT /api/admin/comments/:id/approve
+ * PATCH /api/admin/comments/:id
+ * body: { status: "approved" | "rejected" | "pending" }
  */
-router.put("/admin/comments/:id/approve", requireAdmin, async (req, res) => {
-  const c = await Comment.findById(req.params.id);
-  if (!c) return res.status(404).json({ message: "Not found" });
-  if (!c.emailVerified) return res.status(400).json({ message: "Email not verified" });
+router.patch("/admin/comments/:id", requireAdmin, async (req, res) => {
+  const { status } = req.body || {};
+  const ok = ["pending", "approved", "rejected"].includes(status);
+  if (!ok) return res.status(400).json({ message: "Invalid status" });
 
-  c.status = "approved";
-  await c.save();
-  res.json({ ok: true });
-});
+  const item = await Comment.findByIdAndUpdate(
+    req.params.id,
+    { status },
+    { new: true },
+  );
 
-/**
- * PUT /api/admin/comments/:id/reject
- */
-router.put("/admin/comments/:id/reject", requireAdmin, async (req, res) => {
-  const c = await Comment.findById(req.params.id);
-  if (!c) return res.status(404).json({ message: "Not found" });
-  c.status = "rejected";
-  await c.save();
-  res.json({ ok: true });
-});
-
-/**
- * DELETE /api/admin/comments/:id
- */
-router.delete("/admin/comments/:id", requireAdmin, async (req, res) => {
-  const c = await Comment.findByIdAndDelete(req.params.id);
-  if (!c) return res.status(404).json({ message: "Not found" });
-  res.json({ ok: true });
+  if (!item) return res.status(404).json({ message: "Not found" });
+  res.json(item);
 });
 
 export default router;
