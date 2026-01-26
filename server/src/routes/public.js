@@ -3,9 +3,7 @@ import Post from "../models/Post.js";
 
 const router = express.Router();
 
-/**
- * GET /api/posts  (vetëm published)
- */
+// GET /api/posts
 router.get("/posts", async (req, res) => {
   const items = await Post.find({ status: "published" })
     .sort({ publishedAt: -1 })
@@ -16,9 +14,7 @@ router.get("/posts", async (req, res) => {
   res.json({ items });
 });
 
-/**
- * GET /api/posts/:slug
- */
+// GET /api/posts/:slug
 router.get("/posts/:slug", async (req, res) => {
   const post = await Post.findOne({
     slug: req.params.slug,

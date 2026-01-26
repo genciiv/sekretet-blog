@@ -18,7 +18,7 @@ app.use(morgan("dev"));
 // serve uploads folder
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// API routes (UNIFIKIM)
+// API routes
 app.use("/api", publicRoutes);
 app.use("/api", commentsRoutes);
 app.use("/api", adminRoutes);

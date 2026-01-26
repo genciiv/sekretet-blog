@@ -5,10 +5,12 @@ import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
 import SEO from "../components/SEO.jsx";
 import { useI18n } from "../i18n/i18n.jsx";
-import { apiGet } from "../lib/api.js";
+import { apiGet, absUrl } from "../lib/api.js";
 
 export default function Blog() {
-  const { isSQ } = useI18n();
+  const { lang } = useI18n();
+  const isSQ = lang === "sq";
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +19,7 @@ export default function Blog() {
     (async () => {
       try {
         const data = await apiGet("/api/posts");
-        if (ok) setItems(data.items || []);
+        if (ok) setItems(Array.isArray(data.items) ? data.items : []);
       } finally {
         if (ok) setLoading(false);
       }
@@ -34,10 +36,11 @@ export default function Blog() {
             ? "Artikuj turistikë dhe kulturorë për shtegun Levan–Shtyllas–Apolloni."
             : "Touristic and cultural posts for the Levan–Shtyllas–Apollonia trail."
         }
+        lang={lang}
       />
 
       <PageHeader
-        kicker={isSQ ? "Blog" : "Blog"}
+        kicker="Blog"
         title={isSQ ? "Artikuj" : "Posts"}
         subtitle={
           isSQ
@@ -51,28 +54,48 @@ export default function Blog() {
           <div className="text-sm text-zinc-600">Loading…</div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {items.map((p) => (
-              <Card key={p._id} className="p-5">
-                <div className="text-xs text-zinc-500">
-                  {p.category || "General"}
-                </div>
-                <h3 className="mt-1 text-lg font-semibold">
-                  {isSQ
-                    ? p.title_sq || "Pa titull"
-                    : p.title_en || p.title_sq || "Untitled"}
-                </h3>
-                <p className="mt-2 text-sm text-zinc-600">
-                  {isSQ
-                    ? p.excerpt_sq || ""
-                    : p.excerpt_en || p.excerpt_sq || ""}
-                </p>
-                <div className="mt-4">
-                  <Link className="btn btn-primary" to={`/blog/${p.slug}`}>
-                    {isSQ ? "Lexo" : "Read"}
-                  </Link>
-                </div>
-              </Card>
-            ))}
+            {items.map((p) => {
+              const title = isSQ
+                ? (p.title_sq || "").trim()
+                : (p.title_en || p.title_sq || "").trim();
+
+              const excerpt = isSQ
+                ? (p.excerpt_sq || "").trim()
+                : (p.excerpt_en || p.excerpt_sq || "").trim();
+
+              return (
+                <Card key={p._id || p.slug} className="overflow-hidden p-0">
+                  {p.coverImageUrl ? (
+                    <img
+                      src={absUrl(p.coverImageUrl)}
+                      alt={title || "Cover"}
+                      className="h-44 w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
+
+                  <div className="p-5">
+                    <div className="text-xs text-zinc-500">
+                      {p.category || "General"}
+                    </div>
+
+                    <h3 className="mt-1 text-lg font-semibold">
+                      {title || (isSQ ? "Pa titull" : "Untitled")}
+                    </h3>
+
+                    <p className="mt-2 text-sm text-zinc-600">
+                      {excerpt || (isSQ ? "" : "")}
+                    </p>
+
+                    <div className="mt-4">
+                      <Link className="btn btn-primary" to={`/blog/${p.slug}`}>
+                        {isSQ ? "Lexo" : "Read"}
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </Section>

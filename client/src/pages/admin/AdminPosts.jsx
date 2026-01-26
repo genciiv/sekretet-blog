@@ -1,112 +1,120 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import PageHeader from "../../components/sections/PageHeader";
-import Section from "../../components/sections/Section";
-import Card from "../../components/ui/Card";
-import { apiAuthGet, apiAuthSend, clearAdminToken, hasAdminToken } from "../../lib/api";
+import { apiAuthGet, apiAuthSend } from "../../lib/api.js";
+
+function Badge({ status }) {
+  const cls =
+    status === "published"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : "bg-zinc-50 text-zinc-700 border-zinc-200";
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}
+    >
+      {status}
+    </span>
+  );
+}
 
 export default function AdminPosts() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   async function load() {
+    setErr("");
+    setLoading(true);
     try {
-      setErr("");
       const data = await apiAuthGet("/api/admin/posts");
-      setItems(data.items || []);
+      setItems(Array.isArray(data.items) ? data.items : []);
     } catch (e) {
-      setErr("Nuk u ngarkuan postimet (token mund të jetë i pavlefshëm).");
+      setErr(String(e?.message || e));
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (!hasAdminToken()) nav("/admin/login");
-    else load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, []);
 
-  async function createNew() {
-    const body = {
-      title_sq: "Titull i ri (SQ)",
-      title_en: "New title (EN)",
-      excerpt_sq: "",
-      excerpt_en: "",
-      content_sq: "",
-      content_en: "",
-      category: "Antikitet",
-      tags: ["apollonia"],
-      status: "draft",
-      coverImageUrl: ""
-    };
-
-    const created = await apiAuthSend("/api/admin/posts", "POST", body);
-    nav(`/admin/posts/${created._id}`);
-  }
-
-  function logout() {
-    clearAdminToken();
-    nav("/admin/login");
+  async function remove(id) {
+    if (!confirm("Ta fshij këtë postim?")) return;
+    try {
+      await apiAuthSend(`/api/admin/posts/${id}`, "DELETE");
+      await load();
+    } catch (e) {
+      alert(String(e?.message || e));
+    }
   }
 
   return (
-    <main>
-      <PageHeader
-        kicker="Admin"
-        title="Posts"
-        subtitle="Krijo, edito dhe publiko artikuj."
-        right={
-          <div className="flex items-center gap-2">
-            <button className="btn btn-ghost" onClick={logout}>Logout</button>
-            <button className="btn btn-primary" onClick={createNew}>+ New post</button>
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-lg font-semibold">Posts</div>
+          <div className="text-sm text-zinc-500">
+            Menaxho artikujt (draft/published).
           </div>
-        }
-      />
+        </div>
 
-      <Section title="" subtitle="">
-        {err ? (
-          <Card className="p-6">
-            <div className="text-sm font-semibold text-zinc-900">Error</div>
-            <p className="mt-2 text-sm text-zinc-600">{err}</p>
-          </Card>
-        ) : null}
+        <Link to="/admin/posts/new" className="btn btn-primary">
+          + Shto postim
+        </Link>
+      </div>
 
-        <div className="grid gap-4">
-          {items.map((p) => (
-            <Card key={p.slug} className="p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-zinc-900">{p.title_sq}</div>
-                  <div className="mt-1 text-xs text-zinc-600">{p.title_en}</div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="badge">{p.status}</span>
-                    <span className="badge">{p.category || "General"}</span>
-                    {(p.tags || []).slice(0, 4).map((t) => (
-                      <span key={t} className="badge">{t}</span>
-                    ))}
+      {err ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {err}
+        </div>
+      ) : null}
+
+      <div className="mt-5 rounded-2xl border border-zinc-200 overflow-hidden">
+        {loading ? (
+          <div className="p-4 text-sm text-zinc-600">Loading…</div>
+        ) : items.length === 0 ? (
+          <div className="p-4 text-sm text-zinc-600">
+            S’ka postime ende. Kliko “Shto postim”.
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-200">
+            {items.map((p) => (
+              <div
+                key={p._id}
+                className="flex items-center justify-between gap-4 p-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate font-medium">
+                      {p.title_sq || p.title_en || "(Pa titull)"}
+                    </div>
+                    <Badge status={p.status} />
+                    <span className="text-xs text-zinc-500">
+                      {p.category || "General"}
+                    </span>
                   </div>
-                  <div className="mt-3 text-xs text-zinc-500">Slug: {p.slug}</div>
+                  <div className="mt-1 text-xs text-zinc-500 truncate">
+                    /blog/{p.slug}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Link className="btn btn-ghost" to={`/blog/${p.slug}`} target="_blank">
-                    View
-                  </Link>
-                  <Link className="btn btn-primary" to={`/admin/posts/${p._id}`}>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    className="btn"
+                    onClick={() => nav(`/admin/posts/${p._id}`)}
+                  >
                     Edit
-                  </Link>
+                  </button>
+                  <button className="btn" onClick={() => remove(p._id)}>
+                    Delete
+                  </button>
                 </div>
               </div>
-            </Card>
-          ))}
-
-          {items.length === 0 ? (
-            <Card className="p-6">
-              <p className="text-sm text-zinc-600">Nuk ka postime. Krijo një post të ri.</p>
-            </Card>
-          ) : null}
-        </div>
-      </Section>
-    </main>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
