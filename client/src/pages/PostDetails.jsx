@@ -4,8 +4,7 @@ import PageHeader from "../components/sections/PageHeader";
 import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
 import SEO from "../components/SEO.jsx";
-import { useI18n } from "../i18n/i18n.jsx";
-import { apiGet, absUrl } from "../lib/api.js";
+import { apiGet, apiSend, absUrl } from "../lib/api.js";
 
 function stripHtml(s) {
   return String(s || "")
@@ -14,46 +13,34 @@ function stripHtml(s) {
     .trim();
 }
 
-function Lightbox({ open, src, alt, onClose }) {
-  if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-[100] bg-black/80 p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="mx-auto flex h-full max-w-5xl items-center justify-center">
-        <img
-          src={src}
-          alt={alt}
-          className="max-h-full max-w-full rounded-2xl border border-white/10 object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
-
-      <button
-        type="button"
-        className="absolute right-4 top-4 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20"
-        onClick={onClose}
-      >
-        Mbyll
-      </button>
-    </div>
-  );
+function formatDate(d) {
+  try {
+    return new Date(d).toLocaleString("sq-AL", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
 }
 
 export default function PostDetails() {
   const { slug } = useParams();
-  const { lang } = useI18n();
-  const isSQ = lang === "sq";
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [lbOpen, setLbOpen] = useState(false);
-  const [lbSrc, setLbSrc] = useState("");
-  const [lbAlt, setLbAlt] = useState("");
+  // comments
+  const [comments, setComments] = useState([]);
+  const [cLoading, setCLoading] = useState(true);
+  const [cErr, setCErr] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentMsg, setSentMsg] = useState("");
+
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
 
   useEffect(() => {
     let ok = true;
@@ -68,20 +55,38 @@ export default function PostDetails() {
     return () => (ok = false);
   }, [slug]);
 
-  const title = useMemo(() => {
-    if (!post) return "";
-    return isSQ ? post.title_sq || "" : post.title_en || post.title_sq || "";
-  }, [post, isSQ]);
+  async function loadComments() {
+    setCLoading(true);
+    setCErr("");
+    try {
+      const data = await apiGet(`/api/posts/${slug}/comments`);
+      setComments(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setCErr(String(e?.message || e));
+    } finally {
+      setCLoading(false);
+    }
+  }
 
-  const excerpt = useMemo(() => {
-    if (!post) return "";
-    return isSQ ? post.excerpt_sq || "" : post.excerpt_en || post.excerpt_sq || "";
-  }, [post, isSQ]);
+  useEffect(() => {
+    let ok = true;
+    (async () => {
+      await loadComments();
+      if (!ok) return;
+    })();
+    return () => (ok = false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
-  const content = useMemo(() => {
-    if (!post) return "";
-    return isSQ ? post.content_sq || "" : post.content_en || post.content_sq || "";
-  }, [post, isSQ]);
+  const title = useMemo(() => (post?.title_sq || "").trim(), [post]);
+  const excerpt = useMemo(() => (post?.excerpt_sq || "").trim(), [post]);
+  const content = useMemo(() => post?.content_sq || "", [post]);
+
+  const metaDesc = useMemo(() => {
+    const a = excerpt?.trim();
+    if (a) return a;
+    return stripHtml(content).slice(0, 160);
+  }, [excerpt, content]);
 
   if (loading) {
     return (
@@ -94,100 +99,146 @@ export default function PostDetails() {
   if (!post) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-14">
-        <SEO title="Not found" description="Post not found" noindex />
-        <div className="text-sm text-zinc-600">Not found.</div>
+        <SEO title="Nuk u gjet" description="Postimi nuk u gjet" noindex />
+        <div className="text-sm text-zinc-600">Nuk u gjet.</div>
       </main>
     );
   }
 
-  const metaDesc = (excerpt || "").trim() || stripHtml(content).slice(0, 160);
-  const ogImage = post.coverImageUrl ? absUrl(post.coverImageUrl) : "";
+  const ogImage = post.coverImageUrl ? absUrl(post.coverImageUrl) : "/og-default.jpg";
 
-  const images = Array.isArray(post.images) ? post.images : [];
+  async function submitComment(e) {
+    e.preventDefault();
+    setSentMsg("");
+    setCErr("");
 
-  function openLightbox(url, caption) {
-    setLbSrc(absUrl(url));
-    setLbAlt(caption || title || "image");
-    setLbOpen(true);
+    const name = String(form.name || "").trim();
+    const email = String(form.email || "").trim();
+    const message = String(form.message || "").trim();
+
+    if (!name || !email || !message) {
+      setCErr("Plotëso emrin, email-in dhe mesazhin.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      await apiSend(`/api/posts/${slug}/comments`, "POST", { name, email, message });
+      setForm({ name: "", email: "", message: "" });
+      setSentMsg("U dërgua! Komenti do shfaqet pasi të aprovohet nga admin.");
+      // nuk shfaqet menjëherë sepse është pending – por rifreskojmë listën:
+      await loadComments();
+    } catch (ex) {
+      setCErr(String(ex?.message || ex));
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
     <main>
-      <SEO
-        title={title}
-        description={metaDesc}
-        image={ogImage}
-        canonical={`/blog/${post.slug}`}
-        lang={lang}
-      />
+      <SEO title={title || "Post"} description={metaDesc} image={ogImage} canonical={`/blog/${post.slug}`} />
 
-      <PageHeader
-        kicker={post.category || "Blog"}
-        title={title}
-        subtitle={excerpt}
-      />
+      <PageHeader kicker={post.category || "Blog"} title={title || "Pa titull"} subtitle={excerpt} />
 
       <Section title="" subtitle="">
         <Card className="p-6">
-          {/* ✅ Cover (fix: përdor absUrl) */}
           {post.coverImageUrl ? (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200">
-              <img
-                src={absUrl(post.coverImageUrl)}
-                alt={title}
-                className="h-[320px] w-full object-cover"
-                loading="lazy"
-                onClick={() => openLightbox(post.coverImageUrl, title)}
-                style={{ cursor: "zoom-in" }}
-              />
-            </div>
+            <img
+              src={absUrl(post.coverImageUrl)}
+              alt={title || "cover"}
+              className="mb-6 h-[320px] w-full rounded-2xl border border-zinc-200 object-cover"
+              loading="lazy"
+            />
           ) : null}
 
-          {/* ✅ Galeria e postimit */}
-          {images.length ? (
-            <div className="mb-6">
-              <div className="mb-3 text-sm font-semibold text-zinc-900">
-                {isSQ ? "Galeria" : "Gallery"}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {images.map((img, idx) => (
-                  <button
-                    key={img.url + idx}
-                    type="button"
-                    className="group overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 text-left"
-                    onClick={() => openLightbox(img.url, img.caption_sq)}
-                  >
-                    <img
-                      src={absUrl(img.url)}
-                      alt={img.caption_sq || title}
-                      className="h-44 w-full object-cover transition group-hover:scale-[1.02]"
-                      loading="lazy"
-                    />
-                    {img.caption_sq ? (
-                      <div className="px-3 py-2 text-xs text-zinc-700">
-                        {img.caption_sq}
-                      </div>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Content */}
           <article className="prose max-w-none">
             <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-800">
-              {stripHtml(content)
-                ? content
-                : isSQ
-                ? "S’ka përmbajtje."
-                : "No content."}
+              {stripHtml(content) ? content : "S’ka përmbajtje."}
             </div>
           </article>
         </Card>
       </Section>
 
-      <Lightbox open={lbOpen} src={lbSrc} alt={lbAlt} onClose={() => setLbOpen(false)} />
+      {/* COMMENTS */}
+      <Section title="Komentet" subtitle="Komentet shfaqen vetëm pasi të aprovohen.">
+        <div className="grid gap-4 md:grid-cols-[1fr_360px]">
+          {/* List */}
+          <Card className="p-6">
+            {cLoading ? (
+              <div className="text-sm text-zinc-600">Duke i ngarkuar komentet…</div>
+            ) : cErr ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {cErr}
+              </div>
+            ) : comments.length === 0 ? (
+              <div className="text-sm text-zinc-600">S’ka komente ende.</div>
+            ) : (
+              <div className="grid gap-4">
+                {comments.map((c) => (
+                  <div key={c._id} className="rounded-2xl border border-zinc-200 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-zinc-900">{c.name || "Anonim"}</div>
+                      <div className="text-xs text-zinc-500">{formatDate(c.createdAt)}</div>
+                    </div>
+                    <div className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{c.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Form */}
+          <Card className="p-6">
+            <div className="text-sm font-semibold text-zinc-900">Lëre një koment</div>
+            <p className="mt-1 text-xs text-zinc-500">
+              Komenti shkon “pending” dhe shfaqet pasi ta aprovojë admin.
+            </p>
+
+            {sentMsg ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {sentMsg}
+              </div>
+            ) : null}
+
+            {cErr ? (
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {cErr}
+              </div>
+            ) : null}
+
+            <form className="mt-4 grid gap-3" onSubmit={submitComment}>
+              <input
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+                placeholder="Emri"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              <input
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+                placeholder="Email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+              <textarea
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                rows={5}
+                placeholder="Mesazhi"
+                value={form.message}
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+              />
+
+              <button
+                type="submit"
+                disabled={sending}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+              >
+                {sending ? "Duke dërguar…" : "Dërgo koment"}
+              </button>
+            </form>
+          </Card>
+        </div>
+      </Section>
     </main>
   );
 }
