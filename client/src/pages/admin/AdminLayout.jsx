@@ -1,5 +1,6 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { clearAdminToken } from "../../lib/api";
+// FILE: client/src/pages/admin/AdminLayout.jsx
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { clearAdminToken } from "../../lib/api.js";
 
 function Icon({ name }) {
   const cls = "h-5 w-5";
@@ -59,11 +60,23 @@ function Icon({ name }) {
         />
       </svg>
     );
+  if (name === "plus")
+    return (
+      <svg className={cls} viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 5v14M5 12h14"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
   return null;
 }
 
-export default function AdminLayout({ children }) {
+export default function AdminLayout() {
   const nav = useNavigate();
+  const loc = useLocation();
 
   function logout() {
     clearAdminToken();
@@ -71,9 +84,19 @@ export default function AdminLayout({ children }) {
   }
 
   const linkBase =
-    "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition";
+    "flex items-center justify-between rounded-xl px-3 py-2 text-sm transition";
+  const leftBase = "flex items-center gap-3";
   const linkInactive = "text-zinc-700 hover:bg-zinc-100";
   const linkActive = "bg-zinc-900 text-white";
+
+  const title =
+    loc.pathname.includes("/admin/posts")
+      ? "Posts"
+      : loc.pathname.includes("/admin/comments")
+      ? "Comments"
+      : loc.pathname.includes("/admin/gallery")
+      ? "Gallery"
+      : "Admin";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -96,8 +119,11 @@ export default function AdminLayout({ children }) {
                   `${linkBase} ${isActive ? linkActive : linkInactive}`
                 }
               >
-                <Icon name="posts" />
-                Posts
+                <div className={leftBase}>
+                  <Icon name="posts" />
+                  Posts
+                </div>
+                <span className="text-xs opacity-70">→</span>
               </NavLink>
 
               <NavLink
@@ -106,8 +132,11 @@ export default function AdminLayout({ children }) {
                   `${linkBase} ${isActive ? linkActive : linkInactive}`
                 }
               >
-                <Icon name="comments" />
-                Comments
+                <div className={leftBase}>
+                  <Icon name="comments" />
+                  Comments
+                </div>
+                <span className="text-xs opacity-70">→</span>
               </NavLink>
 
               <NavLink
@@ -116,18 +145,23 @@ export default function AdminLayout({ children }) {
                   `${linkBase} ${isActive ? linkActive : linkInactive}`
                 }
               >
-                <Icon name="gallery" />
-                Gallery
+                <div className={leftBase}>
+                  <Icon name="gallery" />
+                  Gallery
+                </div>
+                <span className="text-xs opacity-70">→</span>
               </NavLink>
             </div>
 
             <div className="mt-6 grid gap-2">
-              <button className="btn w-full" onClick={logout}>
+              <button className="btn w-full" onClick={logout} type="button">
                 Logout
               </button>
+
               <button
                 className="btn btn-primary w-full"
                 onClick={() => nav("/")}
+                type="button"
               >
                 View site
               </button>
@@ -136,25 +170,36 @@ export default function AdminLayout({ children }) {
 
           {/* Main */}
           <main className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">Admin</div>
-                <div className="text-xs text-zinc-500">Panel navigimi</div>
+                <div className="text-xs text-zinc-500">{title}</div>
               </div>
 
-              <div className="flex gap-2">
-                <button className="btn" onClick={() => nav(-1)}>
+              <div className="flex items-center gap-2">
+                {loc.pathname === "/admin/posts" ? (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => nav("/admin/posts/new")}
+                    type="button"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Icon name="plus" /> Shto Post
+                    </span>
+                  </button>
+                ) : null}
+
+                <button className="btn" onClick={() => nav(-1)} type="button">
                   ← Back
                 </button>
-                <button className="btn" onClick={() => nav(1)}>
+                <button className="btn" onClick={() => nav(1)} type="button">
                   Forward →
                 </button>
               </div>
             </div>
 
             <div className="mt-6">
-              {/* ✅ KJO E RREGULLON */}
-              {children ? children : <Outlet />}
+              <Outlet />
             </div>
           </main>
         </div>

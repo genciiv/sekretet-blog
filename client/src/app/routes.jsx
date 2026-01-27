@@ -1,3 +1,4 @@
+// FILE: client/src/app/routes.jsx
 import Home from "../pages/Home.jsx";
 import Trail from "../pages/Trail.jsx";
 import Antiquity from "../pages/Antiquity.jsx";
@@ -32,46 +33,18 @@ export const routes = [
 
   // admin
   { path: "/admin/login", element: <AdminLogin /> },
-  { path: "/admin", element: <AdminLayout /> },
+
+  // ✅ NESTED ADMIN ROUTES
   {
-    path: "/admin/posts",
-    element: (
-      <AdminLayout>
-        <AdminPosts />
-      </AdminLayout>
-    ),
-  },
-  {
-    path: "/admin/posts/new",
-    element: (
-      <AdminLayout>
-        <AdminPostEditor />
-      </AdminLayout>
-    ),
-  },
-  {
-    path: "/admin/posts/:id",
-    element: (
-      <AdminLayout>
-        <AdminPostEditor />
-      </AdminLayout>
-    ),
-  },
-  {
-    path: "/admin/comments",
-    element: (
-      <AdminLayout>
-        <AdminComments />
-      </AdminLayout>
-    ),
-  },
-  {
-    path: "/admin/gallery",
-    element: (
-      <AdminLayout>
-        <AdminGallery />
-      </AdminLayout>
-    ),
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { path: "posts", element: <AdminPosts /> },
+      { path: "posts/new", element: <AdminPostEditor /> },
+      { path: "posts/:id", element: <AdminPostEditor /> },
+      { path: "comments", element: <AdminComments /> },
+      { path: "gallery", element: <AdminGallery /> },
+    ],
   },
 
   { path: "*", element: <NotFound /> },

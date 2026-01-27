@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+// FILE: client/src/pages/admin/AdminPosts.jsx
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Card from "../../components/ui/Card.jsx";
 import { apiAuthGet, apiAuthSend } from "../../lib/api.js";
 
-function Badge({ status }) {
-  const cls =
-    status === "published"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-      : "bg-zinc-50 text-zinc-700 border-zinc-200";
+function Badge({ children, tone = "zinc" }) {
+  const map = {
+    zinc: "bg-zinc-100 text-zinc-800 border-zinc-200",
+    green: "bg-green-50 text-green-800 border-green-200",
+    amber: "bg-amber-50 text-amber-800 border-amber-200",
+    red: "bg-red-50 text-red-800 border-red-200",
+  };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}
+      className={[
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+        map[tone] || map.zinc,
+      ].join(" ")}
     >
-      {status}
+      {children}
     </span>
   );
 }
@@ -20,6 +27,8 @@ export default function AdminPosts() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("all"); // all | draft | published
   const [err, setErr] = useState("");
 
   async function load() {
@@ -39,82 +48,145 @@ export default function AdminPosts() {
     load();
   }, []);
 
-  async function remove(id) {
-    if (!confirm("Ta fshij këtë postim?")) return;
-    try {
-      await apiAuthSend(`/api/admin/posts/${id}`, "DELETE");
-      await load();
-    } catch (e) {
-      alert(String(e?.message || e));
-    }
+  const filtered = useMemo(() => {
+    const text = q.trim().toLowerCase();
+    return (items || [])
+      .filter((p) => (status === "all" ? true : p.status === status))
+      .filter((p) => {
+        if (!text) return true;
+        const t =
+          `${p.title_sq || ""} ${p.title_en || ""} ${p.slug || ""} ${p.category || ""}`
+            .toLowerCase()
+            .includes(text);
+        return t;
+      });
+  }, [items, q, status]);
+
+  async function togglePublish(p) {
+    // publish <-> draft
+    const next = p.status === "published" ? "draft" : "published";
+    await apiAuthSend(`/api/admin/posts/${p._id}`, "PUT", { status: next });
+    await load();
+  }
+
+  async function remove(p) {
+    const ok = confirm(`Ta fshij postimin "${p.title_sq || p.slug}"?`);
+    if (!ok) return;
+    await apiAuthSend(`/api/admin/posts/${p._id}`, "DELETE");
+    await load();
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-lg font-semibold">Posts</div>
-          <div className="text-sm text-zinc-500">
-            Menaxho artikujt (draft/published).
+    <div className="grid gap-4">
+      <Card className="p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-2">
+            <input
+              className="h-10 w-full md:w-80 rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:ring-2 focus:ring-zinc-200"
+              placeholder="Kërko titull, slug, kategori…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <select
+              className="h-10 rounded-xl border border-zinc-200 px-3 text-sm"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="all">Të gjitha</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            <button className="btn" onClick={load} type="button">
+              Rifresko
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => nav("/admin/posts/new")}
+              type="button"
+            >
+              Shto Post
+            </button>
           </div>
         </div>
 
-        <Link to="/admin/posts/new" className="btn btn-primary">
-          + Shto postim
-        </Link>
-      </div>
-
-      {err ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {err}
-        </div>
-      ) : null}
-
-      <div className="mt-5 rounded-2xl border border-zinc-200 overflow-hidden">
-        {loading ? (
-          <div className="p-4 text-sm text-zinc-600">Loading…</div>
-        ) : items.length === 0 ? (
-          <div className="p-4 text-sm text-zinc-600">
-            S’ka postime ende. Kliko “Shto postim”.
+        {err ? (
+          <div className="mt-3 text-sm text-red-600">
+            Gabim: {err} (shiko token / requireAdmin)
           </div>
-        ) : (
-          <div className="divide-y divide-zinc-200">
-            {items.map((p) => (
-              <div
-                key={p._id}
-                className="flex items-center justify-between gap-4 p-4"
-              >
+        ) : null}
+      </Card>
+
+      {loading ? (
+        <div className="text-sm text-zinc-600">Loading…</div>
+      ) : filtered.length === 0 ? (
+        <Card className="p-6">
+          <div className="text-sm font-semibold">S’ka postime</div>
+          <div className="mt-1 text-sm text-zinc-600">
+            Kliko “Shto Post” për të krijuar të parin.
+          </div>
+          <div className="mt-4">
+            <Link className="btn btn-primary" to="/admin/posts/new">
+              Shto Post
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {filtered.map((p) => (
+            <Card key={p._id} className="p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate font-medium">
-                      {p.title_sq || p.title_en || "(Pa titull)"}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-semibold text-zinc-900">
+                      {p.title_sq || "Pa titull"}
                     </div>
-                    <Badge status={p.status} />
-                    <span className="text-xs text-zinc-500">
-                      {p.category || "General"}
-                    </span>
+                    <Badge tone={p.status === "published" ? "green" : "amber"}>
+                      {p.status}
+                    </Badge>
+                    {p.category ? <Badge>{p.category}</Badge> : null}
                   </div>
-                  <div className="mt-1 text-xs text-zinc-500 truncate">
-                    /blog/{p.slug}
+                  <div className="mt-1 text-xs text-zinc-500">
+                    slug: <span className="font-mono">{p.slug}</span>
+                    {p.publishedAt ? (
+                      <>
+                        {" "}
+                        • publikuar:{" "}
+                        {new Date(p.publishedAt).toLocaleString()}
+                      </>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link className="btn" to={`/blog/${p.slug}`} target="_blank">
+                    Shiko
+                  </Link>
+                  <Link className="btn" to={`/admin/posts/${p._id}`}>
+                    Edito
+                  </Link>
                   <button
                     className="btn"
-                    onClick={() => nav(`/admin/posts/${p._id}`)}
+                    onClick={() => togglePublish(p)}
+                    type="button"
                   >
-                    Edit
+                    {p.status === "published" ? "Kthe në Draft" : "Publiko"}
                   </button>
-                  <button className="btn" onClick={() => remove(p._id)}>
-                    Delete
+                  <button
+                    className="btn"
+                    onClick={() => remove(p)}
+                    type="button"
+                  >
+                    Fshi
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
