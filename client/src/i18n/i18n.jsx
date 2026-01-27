@@ -1,13 +1,8 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const STORAGE_KEY = "lang";
 
+// vetëm SQ
 const DICT = {
   sq: {
     nav: {
@@ -29,56 +24,29 @@ const DICT = {
     common: {
       language: "Gjuha",
       sq: "SQ",
-      en: "EN",
-    },
-  },
-  en: {
-    nav: {
-      home: "Home",
-      trail: "Trail",
-      antiquity: "Antiquity",
-      blog: "Blog",
-      gallery: "Gallery",
-      partners: "Partners",
-      contact: "Contact",
-      admin: "Admin",
-    },
-    hero: {
-      title: "Secrets of Forgetting",
-      subtitle:
-        "A cultural-tourism portal for the Levan–Shtyllas–Apollonia route.",
-      ctaPrimary: "View the trail",
-      ctaSecondary: "Read the story",
-    },
-    common: {
-      language: "Language",
-      sq: "SQ",
-      en: "EN",
     },
   },
 };
 
 function getInitialLang() {
-  const stored = (localStorage.getItem(STORAGE_KEY) || "").toLowerCase();
-  if (stored === "sq" || stored === "en") return stored;
   return "sq";
 }
 
 const I18nContext = createContext(null);
 
 export function I18nProvider({ children }) {
-  const [lang, setLang] = useState(getInitialLang());
+  const [lang] = useState(getInitialLang());
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, lang);
-    document.documentElement.lang = lang;
-  }, [lang]);
+    // fshi çfarëdo EN të ruajtur më parë
+    localStorage.setItem(STORAGE_KEY, "sq");
+    document.documentElement.lang = "sq";
+  }, []);
 
-  const dict = DICT[lang] || DICT.sq;
+  const dict = DICT.sq;
 
   const api = useMemo(() => {
     function t(path, fallback = "") {
-      // path e stilit: "nav.home"
       const parts = String(path).split(".");
       let cur = dict;
       for (const p of parts) cur = cur?.[p];
@@ -86,13 +54,11 @@ export function I18nProvider({ children }) {
       return cur;
     }
 
-    function setLanguage(next) {
-      const v = String(next || "").toLowerCase();
-      setLang(v === "en" ? "en" : "sq");
-    }
+    // mbahet për kompatibilitet (mos të prishet header etj), por s’bën asgjë
+    function setLanguage() {}
 
-    return { lang, setLanguage, dict, t };
-  }, [lang, dict]);
+    return { lang: "sq", setLanguage, dict, t, isSQ: true };
+  }, [dict]);
 
   return <I18nContext.Provider value={api}>{children}</I18nContext.Provider>;
 }

@@ -1,29 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { apiAuthGet, apiAuthSend, apiAuthUpload, absUrl } from "../../lib/api.js";
+import { apiAuthGet, apiAuthSend, absUrl, getAdminToken } from "../../lib/api.js";
 
 function Icon({ name }) {
   const cls = "h-5 w-5";
   if (name === "save")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
-        <path
-          d="M5 5h11l3 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-        <path
-          d="M7 5v6h10V8"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M8 21v-6h8v6"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
+        <path d="M5 5h11l3 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" stroke="currentColor" strokeWidth="2" />
+        <path d="M7 5v6h10V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M8 21v-6h8v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   if (name === "trash")
@@ -31,54 +17,29 @@ function Icon({ name }) {
       <svg className={cls} viewBox="0 0 24 24" fill="none">
         <path d="M4 7h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path
-          d="M6 7l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
+        <path d="M6 7l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" stroke="currentColor" strokeWidth="2" />
       </svg>
     );
   if (name === "upload")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
         <path d="M12 16V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path
-          d="M7 9l5-5 5 5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M7 9l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   if (name === "eye")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
-        <path
-          d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
         <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" strokeWidth="2" />
       </svg>
     );
   if (name === "tag")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
-        <path
-          d="M20 13l-7 7-11-11V2h7l11 11z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
+        <path d="M20 13l-7 7-11-11V2h7l11 11z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
         <path d="M7 7h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
       </svg>
     );
@@ -184,11 +145,9 @@ const PERIOD_OPTIONS = [
 function normalizeTag(s) {
   return String(s || "").trim();
 }
-
 function removeTagPrefix(tags, prefix) {
   return (tags || []).filter((t) => !String(t).toLowerCase().startsWith(prefix.toLowerCase()));
 }
-
 function getTagValue(tags, prefix) {
   const t = (tags || []).find((x) => String(x).toLowerCase().startsWith(prefix.toLowerCase()));
   if (!t) return "";
@@ -215,9 +174,9 @@ export default function AdminPostEditor() {
     status: "draft",
     slug: "",
     _id: "",
+    images: [], // ✅
   });
 
-  // Dropdown “lidhjet”
   const [place, setPlace] = useState("");
   const [period, setPeriod] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -232,7 +191,6 @@ export default function AdminPostEditor() {
         if (isNew) {
           if (ok) {
             setLoading(false);
-            // init nga tags (bosh)
             setPlace("");
             setPeriod("");
           }
@@ -243,6 +201,7 @@ export default function AdminPostEditor() {
         if (!ok) return;
 
         const tags = Array.isArray(data.tags) ? data.tags : [];
+        const images = Array.isArray(data.images) ? data.images : [];
 
         setPost({
           title_sq: data.title_sq || "",
@@ -254,6 +213,7 @@ export default function AdminPostEditor() {
           status: data.status || "draft",
           slug: data.slug || "",
           _id: data._id || "",
+          images,
         });
 
         setPlace(getTagValue(tags, "place:"));
@@ -308,7 +268,9 @@ export default function AdminPostEditor() {
     });
   }
 
+  // ✅ Upload cover: përdor endpoint-in ekzistues /api/admin/media
   async function uploadCover(file) {
+    const token = getAdminToken();
     const fd = new FormData();
     fd.append("file", file);
     fd.append("title_sq", post.title_sq || "cover");
@@ -317,8 +279,56 @@ export default function AdminPostEditor() {
     fd.append("tags", "cover");
     fd.append("status", "published");
 
-    const created = await apiAuthUpload("/api/admin/media", fd);
+    const res = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/admin/media`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const created = await res.json();
     setField("coverImageUrl", created?.url || "");
+  }
+
+  // ✅ Upload shumë foto te postimi
+  async function uploadGallery(files) {
+    if (!post?._id && isNew) {
+      setErr("Ruaje postimin njëherë (Draft ose Publiko), pastaj bëj upload fotot.");
+      return;
+    }
+
+    const token = getAdminToken();
+    const fd = new FormData();
+    for (const f of Array.from(files || [])) fd.append("files", f);
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/admin/posts/${post._id}/images`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      }
+    );
+
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    setPost((p) => ({ ...p, images: Array.isArray(data.images) ? data.images : p.images }));
+  }
+
+  async function removeGalleryImage(url) {
+    if (!post?._id) return;
+    const ok = confirm("Ta heq këtë foto nga postimi?");
+    if (!ok) return;
+
+    const token = getAdminToken();
+    const u = encodeURIComponent(url);
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/admin/posts/${post._id}/images?url=${u}`,
+      { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    setPost((p) => ({ ...p, images: Array.isArray(data.images) ? data.images : [] }));
   }
 
   function validate() {
@@ -342,7 +352,7 @@ export default function AdminPostEditor() {
     try {
       const payload = {
         title_sq: post.title_sq,
-        title_en: post.title_sq, // ✅ e mbajmë një-gjuhë
+        title_en: post.title_sq, // ✅ një-gjuhë
         excerpt_sq: post.excerpt_sq,
         excerpt_en: post.excerpt_sq,
         content_sq: post.content_sq,
@@ -350,6 +360,7 @@ export default function AdminPostEditor() {
         category: post.category,
         tags: Array.isArray(post.tags) ? post.tags : [],
         coverImageUrl: post.coverImageUrl || "",
+        images: Array.isArray(post.images) ? post.images : [], // ✅
         status: nextStatus || post.status || "draft",
       };
 
@@ -367,6 +378,7 @@ export default function AdminPostEditor() {
         _id: saved._id,
         status: saved.status,
         publishedAt: saved.publishedAt || p.publishedAt,
+        images: Array.isArray(saved.images) ? saved.images : p.images,
       }));
     } catch (e) {
       setErr(String(e?.message || e));
@@ -404,8 +416,7 @@ export default function AdminPostEditor() {
               {isNew ? "Krijo Postim" : "Edito Postim"}
             </div>
             <div className="text-xs text-zinc-500">
-              Status:{" "}
-              <span className="font-medium text-zinc-900">{post.status || "draft"}</span>
+              Status: <span className="font-medium text-zinc-900">{post.status || "draft"}</span>
               {post?.slug ? (
                 <>
                   {" "}
@@ -465,7 +476,7 @@ export default function AdminPostEditor() {
       </div>
 
       {/* Form */}
-      <div className="grid gap-4 md:grid-cols-[1fr_360px]">
+      <div className="grid gap-4 md:grid-cols-[1fr_380px]">
         {/* Left */}
         <div className="grid gap-4">
           <div className="rounded-3xl border border-zinc-200 bg-white p-5">
@@ -499,6 +510,79 @@ export default function AdminPostEditor() {
             </div>
           </div>
 
+          {/* ✅ Galeria */}
+          <div className="rounded-3xl border border-zinc-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-zinc-900">Galeria e postimit</div>
+
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold hover:bg-zinc-100">
+                <Icon name="upload" />
+                Upload foto (shumë)
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files || !files.length) return;
+                    try {
+                      setErr("");
+                      await uploadGallery(files);
+                    } catch (ex) {
+                      setErr(String(ex?.message || ex));
+                    } finally {
+                      e.target.value = "";
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="mt-4">
+              {!post?._id && isNew ? (
+                <div className="rounded-2xl bg-zinc-50 p-4 text-xs text-zinc-600">
+                  Ruaje postimin njëherë (Draft/Publiko) që të aktivizohet upload i galerisë.
+                </div>
+              ) : null}
+
+              {Array.isArray(post.images) && post.images.length ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {post.images.map((img, idx) => (
+                    <div key={img.url + idx} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                      <img
+                        src={absUrl(img.url)}
+                        alt={img.caption_sq || "image"}
+                        className="h-40 w-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="flex items-center justify-between gap-3 px-3 py-2">
+                        <div className="truncate text-xs text-zinc-600">{img.url}</div>
+                        <button
+                          type="button"
+                          className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                          onClick={async () => {
+                            try {
+                              setErr("");
+                              await removeGalleryImage(img.url);
+                            } catch (ex) {
+                              setErr(String(ex?.message || ex));
+                            }
+                          }}
+                        >
+                          Hiq
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 text-sm text-zinc-600">S’ka foto në galeri ende.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Lidhjet */}
           <div className="rounded-3xl border border-zinc-200 bg-white p-5">
             <div className="text-sm font-semibold text-zinc-900">
               <span className="inline-flex items-center gap-2">
@@ -530,12 +614,11 @@ export default function AdminPostEditor() {
               <div className="rounded-2xl bg-zinc-50 p-4 text-xs text-zinc-600">
                 <div className="font-semibold text-zinc-900">Si funksionon</div>
                 <div className="mt-1">
-                  Kur zgjedh Vend/Periudhë, ky editor vendos automatikisht tags:
+                  Vendos automatikisht tags:
                   <div className="mt-2 grid gap-1">
                     <div>• <span className="font-semibold">place:apollonia</span> / bylis / ardenica</div>
                     <div>• <span className="font-semibold">period:roman</span> / archaic / hellenistic / medieval / modern</div>
                   </div>
-                  Këto përdoren nga faqja “Antikiteti” dhe “Timeline”.
                 </div>
               </div>
             </div>
@@ -565,7 +648,7 @@ export default function AdminPostEditor() {
                 </Select>
               </Field>
 
-              <Field label="Tags shtesë" hint="p.sh: featured, beach, museum (opsionale)">
+              <Field label="Tags shtesë" hint="opsionale">
                 <div className="flex gap-2">
                   <Input
                     value={tagInput}
@@ -600,6 +683,7 @@ export default function AdminPostEditor() {
             </div>
           </div>
 
+          {/* Cover */}
           <div className="rounded-3xl border border-zinc-200 bg-white p-5">
             <div className="text-sm font-semibold text-zinc-900">Cover</div>
 
