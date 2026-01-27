@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import slugify from "slugify";
 import Post from "../models/Post.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
+import upload from "../utils/upload.js";
 
 const router = express.Router();
 
@@ -41,10 +42,7 @@ router.get("/admin/posts/:id", requireAdmin, async (req, res) => {
 router.post("/admin/posts", requireAdmin, async (req, res) => {
   const b = req.body || {};
 
-  const baseSlug = slugify(b.title_sq || "post", {
-    lower: true,
-    strict: true,
-  });
+  const baseSlug = slugify(b.title_sq || "post", { lower: true, strict: true });
 
   let slug = baseSlug;
   let i = 1;
@@ -61,6 +59,7 @@ router.post("/admin/posts", requireAdmin, async (req, res) => {
     content_sq: b.content_sq || "",
     content_en: b.content_en || b.content_sq || "",
     coverImageUrl: b.coverImageUrl || "",
+    images: Array.isArray(b.images) ? b.images : [], // ✅
     category: b.category || "Antikitet",
     tags: Array.isArray(b.tags) ? b.tags : [],
     status,
@@ -76,9 +75,13 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
   if (!post) return res.status(404).json({ message: "Not found" });
 
   Object.assign(post, req.body);
+
   post.title_en ||= post.title_sq;
   post.excerpt_en ||= post.excerpt_sq;
   post.content_en ||= post.content_sq;
+
+  // siguro array
+  if (!Array.isArray(post.images)) post.images = [];
 
   if (req.body.status === "published" && !post.publishedAt) {
     post.publishedAt = new Date();
@@ -89,6 +92,46 @@ router.put("/admin/posts/:id", requireAdmin, async (req, res) => {
 
   await post.save();
   res.json(post);
+});
+
+// ✅ MULTI UPLOAD FOTO për POST
+// POST /api/admin/posts/:id/images (FormData: files[])
+router.post(
+  "/admin/posts/:id/images",
+  requireAdmin,
+  upload.array("files", 30),
+  async (req, res) => {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Not found" });
+
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ message: "No files uploaded" });
+
+    const newImages = files.map((f) => ({
+      url: `/uploads/${f.filename}`,
+      caption_sq: "",
+    }));
+
+    post.images = [...(post.images || []), ...newImages];
+    await post.save();
+
+    res.status(201).json({ ok: true, images: post.images });
+  }
+);
+
+// ✅ fshi 1 foto nga post me URL
+// DELETE /api/admin/posts/:id/images?url=/uploads/xxx.jpg
+router.delete("/admin/posts/:id/images", requireAdmin, async (req, res) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ message: "Not found" });
+
+  const url = String(req.query.url || "");
+  if (!url) return res.status(400).json({ message: "Missing url" });
+
+  post.images = (post.images || []).filter((img) => img.url !== url);
+  await post.save();
+
+  res.json({ ok: true, images: post.images });
 });
 
 // DELETE

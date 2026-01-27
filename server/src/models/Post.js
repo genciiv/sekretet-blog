@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+const PostImageSchema = new mongoose.Schema(
+  {
+    url: { type: String, default: "" },          // p.sh. /uploads/xxx.jpg
+    caption_sq: { type: String, default: "" },  // opsionale
+  },
+  { _id: false }
+);
+
 const PostSchema = new mongoose.Schema(
   {
     slug: { type: String, unique: true, index: true },
@@ -15,6 +23,9 @@ const PostSchema = new mongoose.Schema(
 
     coverImageUrl: { type: String, default: "" },
 
+    // ✅ shumë foto për një post
+    images: { type: [PostImageSchema], default: [] },
+
     category: { type: String, default: "Antikitet", index: true },
     tags: [{ type: String }],
 
@@ -26,7 +37,7 @@ const PostSchema = new mongoose.Schema(
     },
     publishedAt: { type: Date, default: null },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.model("Post", PostSchema);
