@@ -1,0 +1,43 @@
+# ===============================
+# API
+# ===============================
+
+# Backend API base URL
+VITE_API_BASE=http://localhost:5000
+
+# ===============================
+# SITE INFO
+# ===============================
+
+VITE_SITE_NAME=Sekretet e Harrësës
+VITE_SITE_URL=http://localhost:5173
+
+# ===============================
+# SEO DEFAULTS
+# ===============================
+
+VITE_DEFAULT_TITLE=Sekretet e Harrësës
+VITE_DEFAULT_DESCRIPTION=Portal turistik dhe kulturor për Levan, Shtyllas dhe Apolloni.
+VITE_DEFAULT_OG_IMAGE=/og-default.jpg
+
+# ===============================
+# I18N / LANGUAGE
+# ===============================
+
+# Default language
+VITE_DEFAULT_LANG=sq
+
+# Supported languages (used nga i18n)
+VITE_LANGS=sq,en
+
+# ===============================
+# MAP (Leaflet / Mapbox)
+# ===============================
+
+# Center of map (Apollonia area)
+VITE_MAP_CENTER_LAT=40.7249
+VITE_MAP_CENTER_LNG=19.4737
+VITE_MAP_ZOOM=11
+
+# Nëse më vonë kalon në Mapbox
+# VITE_MAPBOX_TOKEN=PASTE_TOKEN_KETU
