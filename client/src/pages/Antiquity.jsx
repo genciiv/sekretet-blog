@@ -6,50 +6,36 @@ import Card from "../components/ui/Card";
 import MapView from "../components/MapView.jsx";
 import { apiGet, absUrl } from "../lib/api.js";
 
-const PLACES = [
-  { key: "apollonia", title: "Apollonia" },
-  { key: "bylis", title: "Bylis" },
-  { key: "ardenica", title: "Ardenica" },
-];
-
-const PERIODS = [
-  { key: "all", label: "Të gjitha" },
-  { key: "archaic", label: "Shek. VI p.e.s" },
-  { key: "hellenistic", label: "Periudha helenistike" },
-  { key: "roman", label: "Periudha romake" },
-  { key: "medieval", label: "Mesjeta" },
-  { key: "modern", label: "Sot" },
-];
-
 function hasTag(p, tag) {
-  const t = String(tag || "")
-    .trim()
-    .toLowerCase();
+  const t = String(tag || "").trim().toLowerCase();
   return (
     Array.isArray(p?.tags) &&
-    p.tags.some(
-      (x) =>
-        String(x || "")
-          .trim()
-          .toLowerCase() === t,
-    )
+    p.tags.some((x) => String(x || "").trim().toLowerCase() === t)
   );
 }
 
-function pickPostForPlace(items, placeKey) {
-  const k = String(placeKey || "").toLowerCase();
+function isAntiquityCategory(p) {
+  return String(p?.category || "").trim().toLowerCase() === "antikitet";
+}
 
-  // 1) prefer tag place:xxx
-  const byTag = (items || []).find((p) => hasTag(p, `place:${k}`));
-  if (byTag) return byTag;
+function getPeriodFromTags(p) {
+  const tags = Array.isArray(p?.tags) ? p.tags : [];
+  const found = tags
+    .map((t) => String(t || "").trim().toLowerCase())
+    .find((t) => t.startsWith("period:"));
+  return found ? found.replace("period:", "").trim() : "";
+}
 
-  // 2) fallback: category == placeKey
-  const byCat = (items || []).find(
-    (p) => String(p?.category || "").toLowerCase() === k,
-  );
-  if (byCat) return byCat;
-
-  return null;
+function prettifyPeriodKey(key) {
+  const k = String(key || "").trim().toLowerCase();
+  const map = {
+    archaic: "Shek. VI p.e.s",
+    hellenistic: "Periudha helenistike",
+    roman: "Periudha romake",
+    medieval: "Mesjeta",
+    modern: "Sot",
+  };
+  return map[k] || k || "Pa periudhë";
 }
 
 function PostMiniCard({ p }) {
@@ -63,22 +49,24 @@ function PostMiniCard({ p }) {
         <img
           src={img}
           alt={title}
-          className="h-40 w-full object-cover"
+          className="h-32 w-full object-cover" // ↓ më e vogël
           loading="lazy"
         />
       ) : (
-        <div className="flex h-40 items-center justify-center bg-zinc-50 text-xs text-zinc-500">
+        <div className="flex h-32 items-center justify-center bg-zinc-50 text-xs text-zinc-500">
           Pa foto
         </div>
       )}
 
       <div className="p-4">
-        <div className="text-xs text-zinc-500">
-          {p?.category || "Antikitet"}
+        <div className="text-xs text-zinc-500">{p?.category || "Antikitet"}</div>
+
+        <div className="mt-1 line-clamp-2 text-sm font-semibold text-zinc-900">
+          {title}
         </div>
-        <div className="mt-1 text-sm font-semibold text-zinc-900">{title}</div>
+
         {excerpt ? (
-          <div className="mt-2 text-sm text-zinc-600">{excerpt}</div>
+          <div className="mt-2 line-clamp-2 text-sm text-zinc-600">{excerpt}</div>
         ) : null}
 
         <div className="mt-3">
@@ -96,13 +84,12 @@ export default function Antiquity() {
   const [loading, setLoading] = useState(true);
 
   const [period, setPeriod] = useState("all");
-  const [limit, setLimit] = useState(8);
 
   useEffect(() => {
     let ok = true;
     (async () => {
       try {
-        const data = await apiGet("/api/posts"); // kthen vetëm published
+        const data = await apiGet("/api/posts");
         if (ok) setItems(Array.isArray(data?.items) ? data.items : []);
       } finally {
         if (ok) setLoading(false);
@@ -111,11 +98,31 @@ export default function Antiquity() {
     return () => (ok = false);
   }, []);
 
-  const featuredPlaces = useMemo(() => {
-    return PLACES.map((pl) => ({
-      ...pl,
-      post: pickPostForPlace(items, pl.key),
-    }));
+  // Pikat kryesore: vetëm postet me category Antikitet
+  const featuredAntiquityPosts = useMemo(() => {
+    return (items || []).filter(isAntiquityCategory);
+  }, [items]);
+
+  // Dropdown: vetëm periudhat që ekzistojnë realisht
+  const availablePeriods = useMemo(() => {
+    const set = new Set();
+    (items || []).forEach((p) => {
+      const k = getPeriodFromTags(p);
+      if (k) set.add(k);
+    });
+
+    const arr = Array.from(set);
+    const order = ["archaic", "hellenistic", "roman", "medieval", "modern"];
+    arr.sort((a, b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+    return arr;
   }, [items]);
 
   const timelineItems = useMemo(() => {
@@ -124,88 +131,36 @@ export default function Antiquity() {
     return list.filter((p) => hasTag(p, `period:${period}`));
   }, [items, period]);
 
-  // reset limit kur ndryshon filtri
-  useEffect(() => {
-    setLimit(8);
-  }, [period]);
+  // vetëm 6
+  const visibleTimeline = useMemo(() => timelineItems.slice(0, 6), [timelineItems]);
 
   return (
     <main>
       <PageHeader
         kicker="Antikiteti"
         title="Antikiteti i zonës"
-        subtitle="Pika kryesore, hartë dhe timeline – të lidhura me postimet."
+        subtitle="Postimet e kategorisë Antikitet + hartë dhe timeline me filtra."
       />
 
       {/* PIKAT KRYESORE */}
       <Section
         title="Pikat kryesore"
-        subtitle="Kartat lidhen automatikisht me postimet (place:* ose category)."
+        subtitle="Shfaqen vetëm postimet me kategori: Antikitet."
       >
         {loading ? (
           <div className="text-sm text-zinc-600">Loading…</div>
+        ) : featuredAntiquityPosts.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+            S’ka postime me kategori <b>Antikitet</b>.
+            <div className="mt-2 text-xs text-zinc-500">
+              Te Admin → vendos te postimi <b>Category = Antikitet</b>.
+            </div>
+          </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3">
-            {featuredPlaces.map((pl) => {
-              const p = pl.post;
-
-              if (!p) {
-                return (
-                  <Card key={pl.key} className="overflow-hidden p-0">
-                    <div className="p-5">
-                      <div className="text-sm font-semibold text-zinc-900">
-                        {pl.title}
-                      </div>
-                      <div className="mt-2 text-sm text-zinc-600">
-                        S’ka postim të publikuar ende për këtë vend.
-                      </div>
-                      <div className="mt-3 text-xs text-zinc-500">
-                        Këshillë: publiko një post me tag <b>place:{pl.key}</b>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              }
-
-              const img = p.coverImageUrl ? absUrl(p.coverImageUrl) : "";
-              const title = (p.title_sq || "").trim() || pl.title;
-
-              return (
-                <Card key={pl.key} className="overflow-hidden p-0">
-                  {img ? (
-                    <img
-                      src={img}
-                      alt={title}
-                      className="h-44 w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-44 items-center justify-center bg-zinc-50 text-xs text-zinc-500">
-                      Pa foto
-                    </div>
-                  )}
-
-                  <div className="p-5">
-                    <div className="text-xs text-zinc-500">Antikitet</div>
-                    <div className="mt-1 text-lg font-semibold text-zinc-900">
-                      {title}
-                    </div>
-
-                    {p.excerpt_sq ? (
-                      <div className="mt-2 text-sm text-zinc-600">
-                        {p.excerpt_sq}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-4">
-                      <Link className="btn btn-primary" to={`/blog/${p.slug}`}>
-                        Lexo
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {featuredAntiquityPosts.map((p) => (
+              <PostMiniCard key={p._id || p.slug} p={p} />
+            ))}
           </div>
         )}
       </Section>
@@ -213,7 +168,7 @@ export default function Antiquity() {
       {/* HARTA */}
       <Section
         title="Harta e antikitetit"
-        subtitle="Marker-at lidhen me postimet (nga komponenti MapView)."
+        subtitle="Marker-at lidhen me postimet (place:*)."
       >
         <MapView />
       </Section>
@@ -221,52 +176,54 @@ export default function Antiquity() {
       {/* TIMELINE */}
       <Section
         title="Timeline"
-        subtitle="Filtro sipas periudhës me tags: period:archaic / hellenistic / roman / medieval / modern"
+        subtitle="Filtro me dropdown sipas periudhës (period:*). Shfaq 6 postime."
       >
         <Card className="p-6">
-          <div className="flex flex-wrap items-center gap-2">
-            {PERIODS.map((x) => (
-              <button
-                key={x.key}
-                type="button"
-                className={[
-                  "h-9 rounded-full border px-4 text-sm font-medium",
-                  period === x.key
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 bg-white hover:bg-zinc-100",
-                ].join(" ")}
-                onClick={() => setPeriod(x.key)}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="text-sm font-semibold text-zinc-900">Filtro periudhën</div>
+
+            <div className="w-full md:w-[320px]">
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
               >
-                {x.label}
-              </button>
-            ))}
+                <option value="all">Të gjitha</option>
+                {availablePeriods.map((k) => (
+                  <option key={k} value={k}>
+                    {prettifyPeriodKey(k)}
+                  </option>
+                ))}
+              </select>
+
+              {availablePeriods.length === 0 ? (
+                <div className="mt-2 text-xs text-zinc-500">
+                  S’ka tags period:* te postimet. Shto p.sh. <b>period:roman</b>.
+                </div>
+              ) : null}
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {timelineItems.slice(0, limit).map((p) => (
+          {/* ✅ 3 kolona në desktop */}
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {visibleTimeline.map((p) => (
               <PostMiniCard key={p._id || p.slug} p={p} />
             ))}
           </div>
 
           {timelineItems.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
-              S’ka postime të publikuara për këtë periudhë.
+              S’ka postime për këtë filtër.
               <div className="mt-2 text-xs text-zinc-500">
-                Kontrollo që postimi të jetë <b>published</b> dhe të ketë tag-un
-                p.sh. <b>period:{period === "all" ? "roman" : period}</b>
+                Sigurohu që postimi të jetë <b>published</b> dhe të ketë tag-un{" "}
+                <b>period:{period === "all" ? "roman" : period}</b>.
               </div>
             </div>
           ) : null}
 
-          {timelineItems.length > limit ? (
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                className="rounded-full border border-zinc-200 px-5 py-2 text-sm font-semibold hover:bg-zinc-100"
-                onClick={() => setLimit((n) => n + 8)}
-              >
-                Shfaq më shumë
-              </button>
+          {timelineItems.length > 6 ? (
+            <div className="mt-4 text-xs text-zinc-500">
+              Po shfaqen vetëm 6 nga {timelineItems.length}. Ndrysho filtrin për të parë të tjerat.
             </div>
           ) : null}
         </Card>

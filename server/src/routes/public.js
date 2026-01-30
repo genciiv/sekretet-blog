@@ -8,11 +8,12 @@ router.get("/posts", async (req, res) => {
   const items = await Post.find({ status: "published" })
     .sort({ publishedAt: -1 })
     .select(
-      "slug title_sq title_en excerpt_sq excerpt_en coverImageUrl category publishedAt",
+      "slug title_sq title_en excerpt_sq excerpt_en coverImageUrl category tags publishedAt status",
     );
 
   res.json({ items });
 });
+
 
 // GET /api/posts/:slug
 router.get("/posts/:slug", async (req, res) => {

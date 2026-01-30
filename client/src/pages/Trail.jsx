@@ -2,6 +2,8 @@ import PageHeader from "../components/sections/PageHeader";
 import Section from "../components/sections/Section";
 import Card from "../components/ui/Card";
 import PlacesMap from "../components/Map/PlacesMap";
+import TimelineTabs from "../components/timeline/TimelineTabs.jsx";
+
 import { places } from "../data/places";
 
 export default function Antiquity() {
@@ -35,23 +37,12 @@ export default function Antiquity() {
         </Card>
       </Section>
 
-      <Section title="Timeline" subtitle="Shek. VI p.e.s → Romakët → Mesjeta → Sot (placeholder)">
-        <Card className="p-6">
-          <div className="grid gap-3 md:grid-cols-4">
-            {[
-              "Shek. VI p.e.s",
-              "Periudha helenistike",
-              "Periudha romake",
-              "Mesjeta / Sot",
-            ].map((x) => (
-              <div key={x} className="rounded-2xl border border-zinc-200 bg-white p-4">
-                <div className="text-sm font-semibold text-zinc-900">{x}</div>
-                <p className="mt-2 text-sm text-zinc-600">Përmbajtja do shtohet më vonë.</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </Section>
+      <Section
+  title="Timeline"
+  subtitle="Kliko periudhën dhe shfaqen vetëm postet përkatëse (tags: period:*)."
+>
+  <TimelineTabs defaultPeriod="archaic" limit={6} />
+</Section>
     </main>
   );
 }
