@@ -19,6 +19,9 @@ import AdminPostEditor from "../pages/admin/AdminPostEditor.jsx";
 import AdminComments from "../pages/admin/AdminComments.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
 
+// ✅ NEW
+import AdminContacts from "../pages/admin/AdminContacts.jsx";
+
 export const routes = [
   { path: "/", element: <Home /> },
   { path: "/trail", element: <Trail /> },
@@ -34,7 +37,6 @@ export const routes = [
   // admin
   { path: "/admin/login", element: <AdminLogin /> },
 
-  // ✅ NESTED ADMIN ROUTES
   {
     path: "/admin",
     element: <AdminLayout />,
@@ -44,6 +46,9 @@ export const routes = [
       { path: "posts/:id", element: <AdminPostEditor /> },
       { path: "comments", element: <AdminComments /> },
       { path: "gallery", element: <AdminGallery /> },
+
+      // ✅ NEW
+      { path: "contacts", element: <AdminContacts /> },
     ],
   },
 

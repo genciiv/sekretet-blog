@@ -4,6 +4,7 @@ import { clearAdminToken } from "../../lib/api.js";
 
 function Icon({ name }) {
   const cls = "h-5 w-5";
+
   if (name === "posts")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
@@ -20,6 +21,7 @@ function Icon({ name }) {
         />
       </svg>
     );
+
   if (name === "comments")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
@@ -37,6 +39,7 @@ function Icon({ name }) {
         />
       </svg>
     );
+
   if (name === "gallery")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
@@ -60,6 +63,26 @@ function Icon({ name }) {
         />
       </svg>
     );
+
+  // ✅ NEW: contacts icon
+  if (name === "contacts")
+    return (
+      <svg className={cls} viewBox="0 0 24 24" fill="none">
+        <path
+          d="M4 6h16v12H4V6z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 7l8 6 8-6"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+
   if (name === "plus")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
@@ -71,6 +94,7 @@ function Icon({ name }) {
         />
       </svg>
     );
+
   return null;
 }
 
@@ -89,14 +113,15 @@ export default function AdminLayout() {
   const linkInactive = "text-zinc-700 hover:bg-zinc-100";
   const linkActive = "bg-zinc-900 text-white";
 
-  const title =
-    loc.pathname.includes("/admin/posts")
-      ? "Posts"
-      : loc.pathname.includes("/admin/comments")
+  const title = loc.pathname.includes("/admin/posts")
+    ? "Posts"
+    : loc.pathname.includes("/admin/comments")
       ? "Comments"
       : loc.pathname.includes("/admin/gallery")
-      ? "Gallery"
-      : "Admin";
+        ? "Gallery"
+        : loc.pathname.includes("/admin/contacts")
+          ? "Kontaktet"
+          : "Admin";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -148,6 +173,20 @@ export default function AdminLayout() {
                 <div className={leftBase}>
                   <Icon name="gallery" />
                   Gallery
+                </div>
+                <span className="text-xs opacity-70">→</span>
+              </NavLink>
+
+              {/* ✅ NEW */}
+              <NavLink
+                to="/admin/contacts"
+                className={({ isActive }) =>
+                  `${linkBase} ${isActive ? linkActive : linkInactive}`
+                }
+              >
+                <div className={leftBase}>
+                  <Icon name="contacts" />
+                  Kontaktet
                 </div>
                 <span className="text-xs opacity-70">→</span>
               </NavLink>

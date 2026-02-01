@@ -153,8 +153,7 @@ export default function AdminPosts() {
                     {p.publishedAt ? (
                       <>
                         {" "}
-                        • publikuar:{" "}
-                        {new Date(p.publishedAt).toLocaleString()}
+                        • publikuar: {new Date(p.publishedAt).toLocaleString()}
                       </>
                     ) : null}
                   </div>
