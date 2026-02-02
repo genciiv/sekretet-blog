@@ -34,7 +34,7 @@ export default function AdminContacts() {
   const [loading, setLoading] = useState(true);
 
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all"); // all | new | answered | closed
   const [err, setErr] = useState("");
 
   const [openId, setOpenId] = useState("");
@@ -44,7 +44,7 @@ export default function AdminContacts() {
     setLoading(true);
     try {
       const qs = new URLSearchParams();
-      qs.set("status", status);
+      qs.set("status", statusFilter);
       if (q.trim()) qs.set("q", q.trim());
       const data = await apiAuthGet(`/api/admin/contacts?${qs.toString()}`);
       setItems(Array.isArray(data.items) ? data.items : []);
@@ -58,13 +58,14 @@ export default function AdminContacts() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [statusFilter]);
 
-  // (opsionale) nëse do e përdorësh më vonë
-  useMemo(() => items.find((x) => x._id === openId), [items, openId]);
+  const openItem = useMemo(
+    () => items.find((x) => x._id === openId),
+    [items, openId]
+  );
 
-  // ✅ RREGULLIM: emër tjetër (mos përplaset me setStatus të useState)
-  async function updateContactStatus(id, next) {
+  async function updateStatus(id, next) {
     await apiAuthSend(`/api/admin/contacts/${id}`, "PUT", { status: next });
     await load();
   }
@@ -79,15 +80,19 @@ export default function AdminContacts() {
 
   async function reply(id) {
     const subject = prompt("Subject i email-it:", "Përgjigje nga Sekretet");
-    if (!subject) return;
+    if (subject === null) return;
 
     const body = prompt("Shkruaj përgjigjen (text):");
-    if (!body) return;
+    if (!body || !body.trim()) {
+      alert("Duhet të shkruash një mesazh për reply.");
+      return;
+    }
 
     await apiAuthSend(`/api/admin/contacts/${id}/reply`, "POST", {
-      subject,
-      body,
+      subject: subject || "Përgjigje nga Sekretet",
+      body: body.trim(),
     });
+
     await load();
     alert("U dërgua email-i.");
   }
@@ -104,11 +109,10 @@ export default function AdminContacts() {
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load()}
             />
-
             <select
               className="h-10 rounded-xl border border-zinc-200 px-3 text-sm"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">Të gjitha</option>
               <option value="new">New</option>
@@ -167,9 +171,7 @@ export default function AdminContacts() {
 
                   {openId === x._id ? (
                     <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                      <div className="text-xs text-zinc-500">
-                        Mesazhi i plotë
-                      </div>
+                      <div className="text-xs text-zinc-500">Mesazhi i plotë</div>
                       <div className="mt-2 whitespace-pre-wrap text-sm text-zinc-800">
                         {x.message}
                       </div>
@@ -193,11 +195,7 @@ export default function AdminContacts() {
                     Mailto
                   </a>
 
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={() => reply(x._id)}
-                  >
+                  <button className="btn" type="button" onClick={() => reply(x._id)}>
                     Reply (SMTP)
                   </button>
 
@@ -205,7 +203,7 @@ export default function AdminContacts() {
                     <button
                       className="btn"
                       type="button"
-                      onClick={() => updateContactStatus(x._id, "answered")}
+                      onClick={() => updateStatus(x._id, "answered")}
                     >
                       Shëno Answered
                     </button>
@@ -215,17 +213,13 @@ export default function AdminContacts() {
                     <button
                       className="btn"
                       type="button"
-                      onClick={() => updateContactStatus(x._id, "closed")}
+                      onClick={() => updateStatus(x._id, "closed")}
                     >
                       Close
                     </button>
                   ) : null}
 
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={() => remove(x._id)}
-                  >
+                  <button className="btn" type="button" onClick={() => remove(x._id)}>
                     Fshi
                   </button>
                 </div>

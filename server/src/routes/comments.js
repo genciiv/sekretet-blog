@@ -1,3 +1,4 @@
+// FILE: server/src/routes/comments.js
 import express from "express";
 import validator from "validator";
 import Comment from "../models/Comment.js";
@@ -16,7 +17,7 @@ router.post("/posts/:slug/comments", async (req, res) => {
     return res.status(400).json({ message: "Invalid email" });
   }
 
-  const c = await Comment.create({
+  await Comment.create({
     slug: req.params.slug,
     name,
     email,
@@ -30,7 +31,7 @@ router.post("/posts/:slug/comments", async (req, res) => {
   });
 });
 
-// 👉 GET approved comments (PUBLIC – KY MUNGONTE)
+// GET approved comments (public)
 router.get("/posts/:slug/comments", async (req, res) => {
   const items = await Comment.find({
     slug: req.params.slug,

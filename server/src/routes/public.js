@@ -1,55 +1,34 @@
+// FILE: server/src/routes/public.js
 import express from "express";
+import validator from "validator";
 import ContactMessage from "../models/ContactMessage.js";
-import Post from "../models/Post.js";
 
 const router = express.Router();
 
-/* ================= POSTS (siç i ke) ================= */
+/**
+ * ✅ PUBLIC: POST /api/contact
+ * body: { name, email, message }
+ */
+router.post("/contact", async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  const email = String(req.body?.email || "").trim();
+  const message = String(req.body?.message || "").trim();
 
-router.get("/posts", async (req, res) => {
-  const items = await Post.find({ status: "published" })
-    .sort({ publishedAt: -1 })
-    .select(
-      "slug title_sq title_en excerpt_sq excerpt_en coverImageUrl category tags publishedAt",
-    );
+  if (!email || !message) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+  if (!validator.isEmail(email)) {
+    return res.status(400).json({ message: "Invalid email" });
+  }
 
-  res.json({ items });
-});
-
-router.get("/posts/:slug", async (req, res) => {
-  const post = await Post.findOne({
-    slug: req.params.slug,
-    status: "published",
+  const item = await ContactMessage.create({
+    name,
+    email,
+    message,
+    status: "new",
   });
 
-  if (!post) return res.status(404).json({ message: "Not found" });
-  res.json(post);
-});
-
-/* ================= CONTACT (PUBLIC) ================= */
-
-// ✅ POST /api/contact
-router.post("/contact", async (req, res) => {
-  try {
-    const { name, email, message } = req.body || {};
-
-    if (!name || !email || !message) {
-      return res.status(400).json({
-        message: "Emri, email dhe mesazhi janë të detyrueshëm.",
-      });
-    }
-
-    const item = await ContactMessage.create({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      message: message.trim(),
-      status: "new",
-    });
-
-    res.status(201).json({ ok: true, id: item._id });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(201).json({ ok: true, id: item._id });
 });
 
 export default router;

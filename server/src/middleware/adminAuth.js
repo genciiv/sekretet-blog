@@ -1,3 +1,4 @@
+// FILE: server/src/middleware/adminAuth.js
 import jwt from "jsonwebtoken";
 
 export function requireAdmin(req, res, next) {

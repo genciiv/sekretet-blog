@@ -1,3 +1,4 @@
+// FILE: server/src/index.js
 import "dotenv/config";
 import app from "./app.js";
 import "./db.js";
