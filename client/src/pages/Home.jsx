@@ -25,9 +25,75 @@ const PERIODS = [
   { key: "modern", label: "Sot" },
 ];
 
+// ======================
+// CLICK → LOCATION → DIRECTIONS (REAL LOCATION)
+// ======================
+// ⚠️ Ndrysho lat/lng me koordinatat reale
+const TRAIL_POINTS = {
+  levani: {
+    titleSq: "Nisja",
+    titleEn: "Start",
+    descSq: "Levan – pika hyrëse e itinerarit.",
+    descEn: "Levan – entry point of the route.",
+    lat: 40.6769,
+    lng: 19.4876,
+    label: "Levan",
+  },
+  shtyllas: {
+    titleSq: "Natyrë & Ujëra",
+    titleEn: "Nature & Water",
+    descSq: "Shtyllas – reliev, shtigje dhe panorama.",
+    descEn: "Shtyllas – terrain, trails and views.",
+    lat: 40.6719,
+    lng: 19.4548,
+    label: "Shtyllas",
+  },
+  apollonia: {
+    titleSq: "Histori",
+    titleEn: "History",
+    descSq: "Apollonia – trashëgimi arkeologjike.",
+    descEn: "Apollonia – archaeological heritage.",
+    lat: 40.7249,
+    lng: 19.4737,
+    label: "Apollonia",
+  },
+};
+
+function openGoogleMapsDirections(origin, dest) {
+  const url =
+    `https://www.google.com/maps/dir/?api=1` +
+    `&origin=${encodeURIComponent(origin)}` +
+    `&destination=${encodeURIComponent(dest)}` +
+    `&travelmode=driving`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function openGoogleMapsPlace(dest) {
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function getUserCoords() {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  });
+}
+
 function hasTag(p, tag) {
   const t = String(tag || "").trim().toLowerCase();
-  return Array.isArray(p?.tags) && p.tags.some((x) => String(x || "").trim().toLowerCase() === t);
+  return (
+    Array.isArray(p?.tags) &&
+    p.tags.some((x) => String(x || "").trim().toLowerCase() === t)
+  );
 }
 
 function pickPostForPlace(items, placeKey) {
@@ -35,7 +101,9 @@ function pickPostForPlace(items, placeKey) {
   const byTag = (items || []).find((p) => hasTag(p, `place:${k}`));
   if (byTag) return byTag;
 
-  const byCat = (items || []).find((p) => String(p?.category || "").toLowerCase() === k);
+  const byCat = (items || []).find(
+    (p) => String(p?.category || "").toLowerCase() === k
+  );
   if (byCat) return byCat;
 
   return null;
@@ -49,7 +117,12 @@ function PostMini({ p }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       {img ? (
-        <img src={img} alt={title} className="h-40 w-full object-cover" loading="lazy" />
+        <img
+          src={img}
+          alt={title}
+          className="h-40 w-full object-cover"
+          loading="lazy"
+        />
       ) : (
         <div className="flex h-40 items-center justify-center bg-zinc-50 text-xs text-zinc-500">
           Pa foto
@@ -59,7 +132,9 @@ function PostMini({ p }) {
       <div className="p-4">
         <div className="text-xs text-zinc-500">{p?.category || "Blog"}</div>
         <div className="mt-1 text-sm font-semibold text-zinc-900">{title}</div>
-        {excerpt ? <div className="mt-2 text-sm text-zinc-600">{excerpt}</div> : null}
+        {excerpt ? (
+          <div className="mt-2 text-sm text-zinc-600">{excerpt}</div>
+        ) : null}
 
         <div className="mt-3">
           <Link className="btn btn-primary" to={`/blog/${p.slug}`}>
@@ -80,7 +155,7 @@ export default function Home() {
     ? "Shteg turistik-kulturor Levan – Shtyllas – Apolloni, me histori, antikitet, galeri dhe hartë interaktive."
     : "A cultural route connecting Levan – Shtyllas – Apollonia, with stories, antiquity, gallery and an interactive map.";
 
-  // Marrim postimet published që të ushqejmë “Antikitet” + Timeline preview
+  // Postimet (published)
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [period, setPeriod] = useState("all");
@@ -91,6 +166,8 @@ export default function Home() {
       try {
         const data = await apiGet("/api/posts");
         if (ok) setPosts(Array.isArray(data?.items) ? data.items : []);
+      } catch {
+        if (ok) setPosts([]);
       } finally {
         if (ok) setLoadingPosts(false);
       }
@@ -108,6 +185,23 @@ export default function Home() {
     return list.filter((p) => hasTag(p, `period:${period}`)).slice(0, 4);
   }, [posts, period]);
 
+  // ✅ klik: merr location reale → hap directions
+  async function goToPoint(key) {
+    const p = TRAIL_POINTS[key];
+    if (!p) return;
+
+    const dest = `${p.lat},${p.lng}`;
+
+    try {
+      const me = await getUserCoords();
+      const origin = `${me.lat},${me.lng}`;
+      openGoogleMapsDirections(origin, dest);
+    } catch {
+      // nëse s’lejon location
+      openGoogleMapsPlace(dest);
+    }
+  }
+
   return (
     <main>
       <SEO title={title} description={desc} lang={lang} />
@@ -122,12 +216,13 @@ export default function Home() {
                 {isSQ ? "Turizëm & Kulturë" : "Tourism & Culture"}
               </div>
 
-              {/* ↓ më normal */}
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
                 {title}
               </h1>
 
-              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">{desc}</p>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">
+                {desc}
+              </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/trail" className="btn btn-primary">
@@ -144,15 +239,25 @@ export default function Home() {
               <div className="mt-7 grid max-w-xl grid-cols-3 gap-3">
                 <Card className="p-4">
                   <div className="text-sm font-semibold text-zinc-900">Shteg</div>
-                  <div className="text-xs text-zinc-600">{isSQ ? "Levan–Shtyllas–Apolloni" : "Levan–Shtyllas–Apollonia"}</div>
+                  <div className="text-xs text-zinc-600">
+                    {isSQ ? "Levan–Shtyllas–Apolloni" : "Levan–Shtyllas–Apollonia"}
+                  </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Antikitet" : "Antiquity"}</div>
-                  <div className="text-xs text-zinc-600">{isSQ ? "Pika & periudha" : "Places & periods"}</div>
+                  <div className="text-sm font-semibold text-zinc-900">
+                    {isSQ ? "Antikitet" : "Antiquity"}
+                  </div>
+                  <div className="text-xs text-zinc-600">
+                    {isSQ ? "Pika & periudha" : "Places & periods"}
+                  </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Harta" : "Map"}</div>
-                  <div className="text-xs text-zinc-600">{isSQ ? "Interaktive" : "Interactive"}</div>
+                  <div className="text-sm font-semibold text-zinc-900">
+                    {isSQ ? "Harta" : "Map"}
+                  </div>
+                  <div className="text-xs text-zinc-600">
+                    {isSQ ? "Interaktive" : "Interactive"}
+                  </div>
                 </Card>
               </div>
             </div>
@@ -171,11 +276,15 @@ export default function Home() {
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <Card className="p-4">
                   <div className="text-sm font-semibold text-zinc-900">Apollonia</div>
-                  <div className="mt-1 text-xs text-zinc-600">{isSQ ? "Park arkeologjik" : "Archaeological park"}</div>
+                  <div className="mt-1 text-xs text-zinc-600">
+                    {isSQ ? "Park arkeologjik" : "Archaeological park"}
+                  </div>
                 </Card>
                 <Card className="p-4">
                   <div className="text-sm font-semibold text-zinc-900">Bylis</div>
-                  <div className="mt-1 text-xs text-zinc-600">{isSQ ? "Qytet antik" : "Ancient city"}</div>
+                  <div className="mt-1 text-xs text-zinc-600">
+                    {isSQ ? "Qytet antik" : "Ancient city"}
+                  </div>
                 </Card>
               </div>
             </div>
@@ -183,36 +292,42 @@ export default function Home() {
         </div>
       </div>
 
-      {/* SHTEGU (preview) */}
+      {/* SHTEGU (preview) – CLICKABLE CARDS */}
       <Section
         title={isSQ ? "Shtegu" : "Trail"}
         subtitle={
           isSQ
-            ? "Përmbledhje e shpejtë – hyr në faqen e shtegut për detaje."
-            : "Quick overview – open the trail page for full details."
+            ? "Përmbledhje e shpejtë – kliko kartat për të hapur rrugën reale në Google Maps."
+            : "Quick overview – click cards to open real directions in Google Maps."
         }
       >
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="p-5">
-            <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Nisja" : "Start"}</div>
-            <p className="mt-2 text-sm text-zinc-600">
-              {isSQ ? "Levan – pika hyrëse e itinerarit." : "Levan – entry point of the route."}
-            </p>
-          </Card>
+          {["levani", "shtyllas", "apollonia"].map((key) => {
+            const p = TRAIL_POINTS[key];
 
-          <Card className="p-5">
-            <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Natyrë & Ujëra" : "Nature & Water"}</div>
-            <p className="mt-2 text-sm text-zinc-600">
-              {isSQ ? "Shtyllas – reliev, shtigje dhe panorama." : "Shtyllas – terrain, trails and views."}
-            </p>
-          </Card>
-
-          <Card className="p-5">
-            <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Histori" : "History"}</div>
-            <p className="mt-2 text-sm text-zinc-600">
-              {isSQ ? "Apollonia – trashëgimi arkeologjike." : "Apollonia – archaeological heritage."}
-            </p>
-          </Card>
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => goToPoint(key)}
+                className="text-left"
+              >
+                <Card className="p-5 transition hover:shadow-md">
+                  <div className="text-sm font-semibold text-zinc-900">
+                    {isSQ ? p.titleSq : p.titleEn}
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-600">
+                    {isSQ ? p.descSq : p.descEn}
+                  </p>
+                  <div className="mt-3 text-xs text-zinc-500">
+                    {isSQ
+                      ? "Kliko → hap rrugën në Google Maps"
+                      : "Click → open directions in Google Maps"}
+                  </div>
+                </Card>
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-5">
@@ -243,7 +358,12 @@ export default function Home() {
                 return (
                   <Card key={pl.key} className="overflow-hidden p-0">
                     {img ? (
-                      <img src={img} alt={pl.title} className="h-40 w-full object-cover" loading="lazy" />
+                      <img
+                        src={img}
+                        alt={pl.title}
+                        className="h-40 w-full object-cover"
+                        loading="lazy"
+                      />
                     ) : (
                       <div className="flex h-40 items-center justify-center bg-zinc-50 text-xs text-zinc-500">
                         {isSQ ? "Pa foto" : "No image"}
@@ -251,11 +371,19 @@ export default function Home() {
                     )}
 
                     <div className="p-5">
-                      <div className="text-sm font-semibold text-zinc-900">{pl.title}</div>
-                      <div className="mt-1 text-xs text-zinc-600">{pl.subtitle}</div>
+                      <div className="text-sm font-semibold text-zinc-900">
+                        {pl.title}
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-600">
+                        {pl.subtitle}
+                      </div>
 
                       <div className="mt-3 text-sm text-zinc-600">
-                        {p ? (p.excerpt_sq || "") : (isSQ ? "S’ka post të publikuar ende për këtë vend." : "No published post yet for this place.")}
+                        {p
+                          ? p.excerpt_sq || ""
+                          : isSQ
+                          ? "S’ka post të publikuar ende për këtë vend."
+                          : "No published post yet for this place."}
                       </div>
 
                       <div className="mt-4">
@@ -273,9 +401,14 @@ export default function Home() {
                       {!p ? (
                         <div className="mt-3 text-xs text-zinc-500">
                           {isSQ ? (
-                            <>Këshillë: publiko një post me tag <b>place:{pl.key}</b></>
+                            <>
+                              Këshillë: publiko një post me tag{" "}
+                              <b>place:{pl.key}</b>
+                            </>
                           ) : (
-                            <>Tip: publish a post with tag <b>place:{pl.key}</b></>
+                            <>
+                              Tip: publish a post with tag <b>place:{pl.key}</b>
+                            </>
                           )}
                         </div>
                       ) : null}
@@ -286,7 +419,9 @@ export default function Home() {
             </div>
 
             <Card className="mt-6 p-6">
-              <div className="text-sm font-semibold text-zinc-900">{isSQ ? "Timeline (mini)" : "Timeline (mini)"}</div>
+              <div className="text-sm font-semibold text-zinc-900">
+                {isSQ ? "Timeline (mini)" : "Timeline (mini)"}
+              </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {PERIODS.map((x) => (
