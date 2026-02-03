@@ -25,10 +25,31 @@ const PERIODS = [
   { key: "modern", label: "Sot" },
 ];
 
+// ✅ Partnerët (placeholder si te faqja Partners)
+const PARTNERS = [
+  {
+    nameSq: "Bashkia Fier",
+    nameEn: "Fier Municipality",
+    descSq: "Përshkrimi do shtohet më vonë.",
+    descEn: "Description will be added later.",
+  },
+  {
+    nameSq: "ZVAP Fier",
+    nameEn: "ZVAP Fier",
+    descSq: "Përshkrimi do shtohet më vonë.",
+    descEn: "Description will be added later.",
+  },
+  {
+    nameSq: "Komuniteti",
+    nameEn: "Community",
+    descSq: "Përshkrimi do shtohet më vonë.",
+    descEn: "Description will be added later.",
+  },
+];
+
 // ======================
 // CLICK → LOCATION → DIRECTIONS (REAL LOCATION)
 // ======================
-// ⚠️ Ndrysho lat/lng me koordinatat reale
 const TRAIL_POINTS = {
   levani: {
     titleSq: "Nisja",
@@ -69,7 +90,9 @@ function openGoogleMapsDirections(origin, dest) {
 }
 
 function openGoogleMapsPlace(dest) {
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    dest
+  )}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
@@ -132,9 +155,7 @@ function PostMini({ p }) {
       <div className="p-4">
         <div className="text-xs text-zinc-500">{p?.category || "Blog"}</div>
         <div className="mt-1 text-sm font-semibold text-zinc-900">{title}</div>
-        {excerpt ? (
-          <div className="mt-2 text-sm text-zinc-600">{excerpt}</div>
-        ) : null}
+        {excerpt ? <div className="mt-2 text-sm text-zinc-600">{excerpt}</div> : null}
 
         <div className="mt-3">
           <Link className="btn btn-primary" to={`/blog/${p.slug}`}>
@@ -185,7 +206,6 @@ export default function Home() {
     return list.filter((p) => hasTag(p, `period:${period}`)).slice(0, 4);
   }, [posts, period]);
 
-  // ✅ klik: merr location reale → hap directions
   async function goToPoint(key) {
     const p = TRAIL_POINTS[key];
     if (!p) return;
@@ -197,7 +217,6 @@ export default function Home() {
       const origin = `${me.lat},${me.lng}`;
       openGoogleMapsDirections(origin, dest);
     } catch {
-      // nëse s’lejon location
       openGoogleMapsPlace(dest);
     }
   }
@@ -220,9 +239,7 @@ export default function Home() {
                 {title}
               </h1>
 
-              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">
-                {desc}
-              </p>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">{desc}</p>
 
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/trail" className="btn btn-primary">
@@ -292,7 +309,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* SHTEGU (preview) – CLICKABLE CARDS */}
+      {/* SHTEGU */}
       <Section
         title={isSQ ? "Shtegu" : "Trail"}
         subtitle={
@@ -306,12 +323,7 @@ export default function Home() {
             const p = TRAIL_POINTS[key];
 
             return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => goToPoint(key)}
-                className="text-left"
-              >
+              <button key={key} type="button" onClick={() => goToPoint(key)} className="text-left">
                 <Card className="p-5 transition hover:shadow-md">
                   <div className="text-sm font-semibold text-zinc-900">
                     {isSQ ? p.titleSq : p.titleEn}
@@ -320,9 +332,7 @@ export default function Home() {
                     {isSQ ? p.descSq : p.descEn}
                   </p>
                   <div className="mt-3 text-xs text-zinc-500">
-                    {isSQ
-                      ? "Kliko → hap rrugën në Google Maps"
-                      : "Click → open directions in Google Maps"}
+                    {isSQ ? "Kliko → hap rrugën në Google Maps" : "Click → open directions in Google Maps"}
                   </div>
                 </Card>
               </button>
@@ -337,7 +347,7 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ANTIKITETI (preview + timeline mini) */}
+      {/* ANTIKITETI */}
       <Section
         title={isSQ ? "Antikiteti" : "Antiquity"}
         subtitle={
@@ -371,12 +381,8 @@ export default function Home() {
                     )}
 
                     <div className="p-5">
-                      <div className="text-sm font-semibold text-zinc-900">
-                        {pl.title}
-                      </div>
-                      <div className="mt-1 text-xs text-zinc-600">
-                        {pl.subtitle}
-                      </div>
+                      <div className="text-sm font-semibold text-zinc-900">{pl.title}</div>
+                      <div className="mt-1 text-xs text-zinc-600">{pl.subtitle}</div>
 
                       <div className="mt-3 text-sm text-zinc-600">
                         {p
@@ -402,8 +408,7 @@ export default function Home() {
                         <div className="mt-3 text-xs text-zinc-500">
                           {isSQ ? (
                             <>
-                              Këshillë: publiko një post me tag{" "}
-                              <b>place:{pl.key}</b>
+                              Këshillë: publiko një post me tag <b>place:{pl.key}</b>
                             </>
                           ) : (
                             <>
@@ -464,9 +469,7 @@ export default function Home() {
       <Section
         title={isSQ ? "Harta Interaktive" : "Interactive Map"}
         subtitle={
-          isSQ
-            ? "Kliko pikat për të hapur artikullin përkatës."
-            : "Click markers to open the related post."
+          isSQ ? "Kliko pikat për të hapur artikullin përkatës." : "Click markers to open the related post."
         }
       >
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -503,6 +506,40 @@ export default function Home() {
               </div>
             </div>
           </Card>
+        </div>
+      </Section>
+
+      {/* ✅ PARTNERËT (POSHTË NË KRYEFAQE) */}
+      <Section
+        title={isSQ ? "Partnerët" : "Partners"}
+        subtitle={
+          isSQ
+            ? "Institucione dhe bashkëpunëtorë (placeholder)."
+            : "Institutions and collaborators (placeholder)."
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          {PARTNERS.map((p) => (
+            <Card key={p.nameSq} className="p-6">
+              <div className="text-sm font-semibold text-zinc-900">
+                {isSQ ? p.nameSq : p.nameEn}
+              </div>
+              <div className="mt-2 text-sm text-zinc-600">
+                {isSQ ? p.descSq : p.descEn}
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link to="/contact" className="btn btn-primary">
+            {isSQ ? "Kontakto" : "Contact"}
+          </Link>
+
+          {/* Nëse e mban ende faqen /partners, kjo i çon aty opsionale */}
+          <Link to="/partners" className="btn btn-outline">
+            {isSQ ? "Shiko më shumë" : "See more"}
+          </Link>
         </div>
       </Section>
     </main>
