@@ -5,7 +5,7 @@ import { requireAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
-// GET /api/admin/comments?status=pending|approved|rejected
+// GET /api/admin/comments?status=pending|approved|rejected|all
 router.get("/admin/comments", requireAdmin, async (req, res) => {
   const status = String(req.query.status || "").trim();
 

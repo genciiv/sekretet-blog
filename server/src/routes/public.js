@@ -1,3 +1,4 @@
+// FILE: server/src/routes/public.js
 import express from "express";
 import Post from "../models/Post.js";
 import Media from "../models/Media.js";
@@ -9,6 +10,8 @@ const router = express.Router();
 
 /**
  * ✅ POSTS (PUBLIC)
+ * GET /api/posts
+ * GET /api/posts/:slug
  */
 router.get("/posts", async (req, res) => {
   const items = await Post.find({ status: "published" })
@@ -19,22 +22,19 @@ router.get("/posts", async (req, res) => {
 });
 
 router.get("/posts/:slug", async (req, res) => {
-  const post = await Post.findOne({
-    slug: req.params.slug,
-    status: "published",
-  });
+  const post = await Post.findOne({ slug: req.params.slug, status: "published" });
   if (!post) return res.status(404).json({ message: "Not found" });
   res.json(post);
 });
 
 /**
  * ✅ MEDIA (PUBLIC)
- * GET /api/media -> lista (published)
+ * GET /api/media
  */
 router.get("/media", async (req, res) => {
   const docs = await Media.find({ status: "published" }).sort({ createdAt: -1 });
 
-  // ✅ Map snake_case -> camelCase që client-i yt mos ndryshojë
+  // snake_case -> camelCase (siç e pret client)
   const items = docs.map((d) => ({
     _id: d._id,
     imageUrl: d.url || "",
@@ -51,6 +51,7 @@ router.get("/media", async (req, res) => {
 
 /**
  * ✅ CONTACT (PUBLIC)
+ * POST /api/contact
  */
 router.post("/contact", async (req, res) => {
   const { name = "", email, message } = req.body || {};
@@ -66,7 +67,7 @@ router.post("/contact", async (req, res) => {
   res.status(201).json({ ok: true, itemId: item._id });
 });
 
-// comments
+// comments public: /api/posts/:slug/comments
 router.use("/", commentsRoutes);
 
 export default router;
