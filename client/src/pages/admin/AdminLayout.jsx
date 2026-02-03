@@ -64,7 +64,6 @@ function Icon({ name }) {
       </svg>
     );
 
-  // ✅ NEW: contacts icon
   if (name === "contacts")
     return (
       <svg className={cls} viewBox="0 0 24 24" fill="none">
@@ -103,8 +102,11 @@ export default function AdminLayout() {
   const loc = useLocation();
 
   function logout() {
+    // ✅ logout real
     clearAdminToken();
-    nav("/admin/login");
+
+    // ✅ shko në kryefaqe dhe mos lejo Back të kthejë te admin
+    nav("/", { replace: true });
   }
 
   const linkBase =
@@ -177,7 +179,6 @@ export default function AdminLayout() {
                 <span className="text-xs opacity-70">→</span>
               </NavLink>
 
-              {/* ✅ NEW */}
               <NavLink
                 to="/admin/contacts"
                 className={({ isActive }) =>
@@ -199,7 +200,7 @@ export default function AdminLayout() {
 
               <button
                 className="btn btn-primary w-full"
-                onClick={() => nav("/")}
+                onClick={() => nav("/", { replace: true })}
                 type="button"
               >
                 View site

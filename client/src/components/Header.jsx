@@ -6,12 +6,14 @@ export default function Header() {
   const loc = useLocation();
   const isAdmin = loc.pathname.startsWith("/admin");
 
+  // ✅ Partnerët hiqen nga menuja
+  // ✅ Shtohet “Rreth nesh”
   const nav = [
     { to: "/", label: t("nav.home") },
     { to: "/blog", label: t("nav.blog") },
     { to: "/gallery", label: t("nav.gallery") },
     { to: "/map", label: lang === "en" ? "Map" : "Harta" },
-    { to: "/partners", label: t("nav.partners") },
+    { to: "/about", label: lang === "en" ? "About" : "Rreth nesh" },
   ];
 
   return (
@@ -22,9 +24,7 @@ export default function Header() {
           <Link to="/" className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-zinc-900" />
             <div className="leading-tight">
-              <div className="text-sm font-semibold text-zinc-900">
-                Sekretet
-              </div>
+              <div className="text-sm font-semibold text-zinc-900">Sekretet</div>
               <div className="text-xs text-zinc-500">
                 Levan–Shtyllas–Apolloni
               </div>

@@ -1,3 +1,4 @@
+// FILE: client/src/app/App.jsx
 import { Routes, Route, useLocation } from "react-router-dom";
 import { routes } from "./routes";
 import Header from "../components/Header";

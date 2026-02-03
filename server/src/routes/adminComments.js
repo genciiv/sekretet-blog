@@ -1,3 +1,4 @@
+// FILE: server/src/routes/adminComments.js
 import express from "express";
 import Comment from "../models/Comment.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
@@ -5,7 +6,11 @@ import { requireAdmin } from "../middleware/adminAuth.js";
 const router = express.Router();
 
 // GET /api/admin/comments?status=pending|approved|rejected|all
+<<<<<<< HEAD
 router.get("/comments", requireAdmin, async (req, res) => {
+=======
+router.get("/admin/comments", requireAdmin, async (req, res) => {
+>>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
   const status = String(req.query.status || "").trim();
 
   const filter = {};
@@ -16,7 +21,11 @@ router.get("/comments", requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/comments/:id  { status }
+<<<<<<< HEAD
 router.patch("/comments/:id", requireAdmin, async (req, res) => {
+=======
+router.patch("/admin/comments/:id", requireAdmin, async (req, res) => {
+>>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
   const next = String(req.body?.status || "").trim();
   const allowed = new Set(["pending", "approved", "rejected"]);
 
@@ -27,7 +36,11 @@ router.patch("/comments/:id", requireAdmin, async (req, res) => {
   const item = await Comment.findByIdAndUpdate(
     req.params.id,
     { status: next },
+<<<<<<< HEAD
     { new: true },
+=======
+    { new: true }
+>>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
   );
 
   if (!item) return res.status(404).json({ message: "Not found" });
