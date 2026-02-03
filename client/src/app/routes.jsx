@@ -18,9 +18,10 @@ import AdminPosts from "../pages/admin/AdminPosts.jsx";
 import AdminPostEditor from "../pages/admin/AdminPostEditor.jsx";
 import AdminComments from "../pages/admin/AdminComments.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
-
-// ✅ NEW
 import AdminContacts from "../pages/admin/AdminContacts.jsx";
+
+// ✅ GUARD (është brenda /app)
+import AdminGuard from "./AdminGuard.jsx";
 
 export const routes = [
   { path: "/", element: <Home /> },
@@ -34,21 +35,26 @@ export const routes = [
   { path: "/map", element: <MapPage /> },
   { path: "/verify-email", element: <VerifyEmail /> },
 
-  // admin
+  // admin login (pa guard)
   { path: "/admin/login", element: <AdminLogin /> },
 
+  // ✅ ADMIN i mbrojtur
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: <AdminGuard />,
     children: [
-      { path: "posts", element: <AdminPosts /> },
-      { path: "posts/new", element: <AdminPostEditor /> },
-      { path: "posts/:id", element: <AdminPostEditor /> },
-      { path: "comments", element: <AdminComments /> },
-      { path: "gallery", element: <AdminGallery /> },
-
-      // ✅ NEW
-      { path: "contacts", element: <AdminContacts /> },
+      {
+        path: "",
+        element: <AdminLayout />,
+        children: [
+          { path: "posts", element: <AdminPosts /> },
+          { path: "posts/new", element: <AdminPostEditor /> },
+          { path: "posts/:id", element: <AdminPostEditor /> },
+          { path: "comments", element: <AdminComments /> },
+          { path: "gallery", element: <AdminGallery /> },
+          { path: "contacts", element: <AdminContacts /> },
+        ],
+      },
     ],
   },
 
