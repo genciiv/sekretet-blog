@@ -1,62 +1,17 @@
-// FILE: server/src/routes/public.js
+// FILE: server/src/routes/media.js
 import express from "express";
-import Post from "../models/Post.js";
 import Media from "../models/Media.js";
-import ContactMessage from "../models/ContactMessage.js";
-
-import commentsRoutes from "./comments.js";
+import upload from "../utils/upload.js";
+import { requireAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
-/**
- * ✅ POSTS (PUBLIC)
- * GET /api/posts
-<<<<<<< HEAD
-=======
- * GET /api/posts/:slug
->>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
- */
-router.get("/posts", async (req, res) => {
-  const items = await Post.find({ status: "published" })
-    .sort({ publishedAt: -1, createdAt: -1 })
-    .select("-content_en -content_sq");
-
-  res.json({ items });
-});
-
-/**
- * ✅ POSTS (PUBLIC)
- * GET /api/posts/:slug
- */
-router.get("/posts/:slug", async (req, res) => {
-<<<<<<< HEAD
-  const post = await Post.findOne({
-    slug: req.params.slug,
-    status: "published",
-  });
-=======
-  const post = await Post.findOne({ slug: req.params.slug, status: "published" });
->>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
-  if (!post) return res.status(404).json({ message: "Not found" });
-  res.json(post);
-});
-
-/**
- * ✅ MEDIA (PUBLIC)
- * GET /api/media
- */
+// PUBLIC
 router.get("/media", async (req, res) => {
-<<<<<<< HEAD
   const docs = await Media.find({ status: "published" }).sort({
     createdAt: -1,
   });
 
-  // map to client-friendly format
-=======
-  const docs = await Media.find({ status: "published" }).sort({ createdAt: -1 });
-
-  // snake_case -> camelCase (siç e pret client)
->>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
   const items = docs.map((d) => ({
     _id: d._id,
     imageUrl: d.url || "",
@@ -71,36 +26,53 @@ router.get("/media", async (req, res) => {
   res.json({ items });
 });
 
-/**
- * ✅ CONTACT (PUBLIC)
- * POST /api/contact
- */
-router.post("/contact", async (req, res) => {
-  const { name = "", email, message } = req.body || {};
-<<<<<<< HEAD
-  if (!email || !message)
-    return res.status(400).json({ message: "Missing fields" });
-=======
-  if (!email || !message) return res.status(400).json({ message: "Missing fields" });
->>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
+// ADMIN
+router.get("/admin/media", requireAdmin, async (req, res) => {
+  const docs = await Media.find().sort({ createdAt: -1 });
 
-  const item = await ContactMessage.create({
-    name,
-    email,
-    message,
-    status: "new",
-  });
+  const items = docs.map((d) => ({
+    _id: d._id,
+    imageUrl: d.url || "",
+    titleSq: d.title_sq || "",
+    titleEn: d.title_en || "",
+    place: d.place || "",
+    tags: Array.isArray(d.tags) ? d.tags : [],
+    status: d.status,
+    createdAt: d.createdAt,
+  }));
 
-  res.status(201).json({ ok: true, itemId: item._id });
+  res.json({ items });
 });
 
-<<<<<<< HEAD
-// ✅ comments routes:
-// POST /api/posts/:slug/comments
-// GET  /api/posts/:slug/comments
-=======
-// comments public: /api/posts/:slug/comments
->>>>>>> 768e997fc7d89c7dce9e3bda017fa8c24453ca74
-router.use("/", commentsRoutes);
+// ✅ UPLOAD: pranon "image" (si client)
+router.post(
+  "/admin/media",
+  requireAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+    const tagsArr = String(req.body.tags || "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const item = await Media.create({
+      url: `/uploads/${req.file.filename}`,
+      title_sq: req.body.titleSq || req.body.title_sq || "",
+      title_en: req.body.titleEn || req.body.title_en || "",
+      place: req.body.place || "",
+      tags: tagsArr,
+      status: req.body.status === "published" ? "published" : "draft",
+    });
+
+    res.status(201).json(item);
+  },
+);
+
+router.delete("/admin/media/:id", requireAdmin, async (req, res) => {
+  await Media.findByIdAndDelete(req.params.id);
+  res.json({ ok: true });
+});
 
 export default router;
