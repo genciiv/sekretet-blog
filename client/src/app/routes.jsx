@@ -11,9 +11,6 @@ import VerifyEmail from "../pages/VerifyEmail.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import MapPage from "../pages/Map.jsx";
 
-// ✅ NEW
-import About from "../pages/About.jsx";
-
 // admin
 import AdminLogin from "../pages/admin/AdminLogin.jsx";
 import AdminLayout from "../pages/admin/AdminLayout.jsx";
@@ -23,6 +20,9 @@ import AdminComments from "../pages/admin/AdminComments.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
 import AdminContacts from "../pages/admin/AdminContacts.jsx";
 
+// ✅ GUARD (saktë, sepse file është te src/app/)
+import AdminGuard from "./AdminGuard.jsx";
+
 export const routes = [
   { path: "/", element: <Home /> },
   { path: "/trail", element: <Trail /> },
@@ -30,20 +30,22 @@ export const routes = [
   { path: "/blog", element: <Blog /> },
   { path: "/blog/:slug", element: <PostDetails /> },
   { path: "/gallery", element: <Gallery /> },
-  { path: "/map", element: <MapPage /> },
-
-  // ✅ NEW
-  { path: "/about", element: <About /> },
-
   { path: "/partners", element: <Partners /> },
   { path: "/contact", element: <Contact /> },
+  { path: "/map", element: <MapPage /> },
   { path: "/verify-email", element: <VerifyEmail /> },
 
-  // admin
+  // ✅ admin login (pa guard)
   { path: "/admin/login", element: <AdminLogin /> },
+
+  // ✅ admin area (me guard)
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: (
+      <AdminGuard>
+        <AdminLayout />
+      </AdminGuard>
+    ),
     children: [
       { path: "posts", element: <AdminPosts /> },
       { path: "posts/new", element: <AdminPostEditor /> },
