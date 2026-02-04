@@ -10,6 +10,8 @@ import PostDetails from "../pages/PostDetails.jsx";
 import VerifyEmail from "../pages/VerifyEmail.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import MapPage from "../pages/Map.jsx";
+import About from "../pages/About.jsx";
+
 
 // admin
 import AdminLogin from "../pages/admin/AdminLogin.jsx";
@@ -30,6 +32,8 @@ export const routes = [
   { path: "/blog", element: <Blog /> },
   { path: "/blog/:slug", element: <PostDetails /> },
   { path: "/gallery", element: <Gallery /> },
+  { path: "/about", element: <About /> },
+
   { path: "/partners", element: <Partners /> },
   { path: "/contact", element: <Contact /> },
   { path: "/map", element: <MapPage /> },

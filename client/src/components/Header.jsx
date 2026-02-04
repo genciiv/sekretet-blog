@@ -1,3 +1,4 @@
+// FILE: client/src/components/Header.jsx
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useI18n } from "../i18n/i18n.jsx";
 
@@ -6,8 +7,6 @@ export default function Header() {
   const loc = useLocation();
   const isAdmin = loc.pathname.startsWith("/admin");
 
-  // ✅ Partnerët hiqen nga menuja
-  // ✅ Shtohet “Rreth nesh”
   const nav = [
     { to: "/", label: t("nav.home") },
     { to: "/blog", label: t("nav.blog") },
@@ -25,13 +24,11 @@ export default function Header() {
             <div className="h-10 w-10 rounded-2xl bg-zinc-900" />
             <div className="leading-tight">
               <div className="text-sm font-semibold text-zinc-900">Sekretet</div>
-              <div className="text-xs text-zinc-500">
-                Levan–Shtyllas–Apolloni
-              </div>
+              <div className="text-xs text-zinc-500">Levan–Shtyllas–Apolloni</div>
             </div>
           </Link>
 
-          {/* MENU QENDROR */}
+          {/* MENU */}
           {!isAdmin ? (
             <nav className="hidden items-center gap-6 md:flex">
               {nav.map((it) => (
@@ -53,7 +50,7 @@ export default function Header() {
             </nav>
           ) : null}
 
-          {/* ✅ VETËM KONTAKT */}
+          {/* KONTAKT */}
           <Link
             to="/contact"
             className="inline-flex h-9 items-center rounded-full border border-zinc-200 px-4 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
