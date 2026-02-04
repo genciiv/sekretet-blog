@@ -1,3 +1,4 @@
+// FILE: server/src/routes/admin.js
 import express from "express";
 import jwt from "jsonwebtoken";
 import slugify from "slugify";
@@ -5,9 +6,8 @@ import nodemailer from "nodemailer";
 
 import Post from "../models/Post.js";
 import ContactMessage from "../models/ContactMessage.js";
-
 import { requireAdmin } from "../middleware/adminAuth.js";
-import upload from "../utils/upload.js";
+import upload from "../utils/upload.js"; // nëse e përdor për post images; ndryshe hiqe
 
 const router = express.Router();
 
@@ -16,10 +16,7 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
 
-  if (
-    email !== process.env.ADMIN_EMAIL ||
-    password !== process.env.ADMIN_PASSWORD
-  ) {
+  if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
@@ -31,7 +28,6 @@ router.post("/login", async (req, res) => {
 });
 
 // -------------------- POSTS --------------------
-
 // GET /api/admin/posts
 router.get("/posts", requireAdmin, async (req, res) => {
   const items = await Post.find().sort({ updatedAt: -1 });
@@ -50,7 +46,6 @@ router.post("/posts", requireAdmin, async (req, res) => {
   const b = req.body || {};
 
   const baseSlug = slugify(b.title_sq || "post", { lower: true, strict: true });
-
   let slug = baseSlug;
   let i = 1;
   while (await Post.findOne({ slug })) slug = `${baseSlug}-${i++}`;
@@ -94,60 +89,20 @@ router.put("/posts/:id", requireAdmin, async (req, res) => {
 
   if (!Array.isArray(post.images)) post.images = [];
 
-  if (req.body.status === "published" && !post.publishedAt)
-    post.publishedAt = new Date();
+  if (req.body.status === "published" && !post.publishedAt) post.publishedAt = new Date();
   if (req.body.status === "draft") post.publishedAt = null;
 
   await post.save();
   res.json(post);
 });
 
-// MULTI UPLOAD: POST /api/admin/posts/:id/images
-router.post(
-  "/posts/:id/images",
-  requireAdmin,
-  upload.array("files", 30),
-  async (req, res) => {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Not found" });
-
-    const files = req.files || [];
-    if (!files.length)
-      return res.status(400).json({ message: "No files uploaded" });
-
-    const newImages = files.map((f) => ({
-      url: `/uploads/${f.filename}`,
-      caption_sq: "",
-    }));
-    post.images = [...(post.images || []), ...newImages];
-    await post.save();
-
-    res.status(201).json({ ok: true, images: post.images });
-  },
-);
-
-// DELETE 1 image: DELETE /api/admin/posts/:id/images?url=...
-router.delete("/posts/:id/images", requireAdmin, async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
-
-  const url = String(req.query.url || "");
-  if (!url) return res.status(400).json({ message: "Missing url" });
-
-  post.images = (post.images || []).filter((img) => img.url !== url);
-  await post.save();
-
-  res.json({ ok: true, images: post.images });
-});
-
-// DELETE post: DELETE /api/admin/posts/:id
+// DELETE /api/admin/posts/:id
 router.delete("/posts/:id", requireAdmin, async (req, res) => {
   await Post.findByIdAndDelete(req.params.id);
   res.json({ ok: true });
 });
 
 // -------------------- CONTACTS (ADMIN) --------------------
-
 const ALLOWED_CONTACT_STATUS = new Set(["new", "answered", "closed"]);
 
 // GET /api/admin/contacts?status=all|new|answered|closed&q=...
@@ -156,8 +111,7 @@ router.get("/contacts", requireAdmin, async (req, res) => {
   const q = String(req.query.q || "").trim();
 
   const filter = {};
-  if (status !== "all" && ALLOWED_CONTACT_STATUS.has(status))
-    filter.status = status;
+  if (status !== "all" && ALLOWED_CONTACT_STATUS.has(status)) filter.status = status;
 
   if (q) {
     filter.$or = [
@@ -171,69 +125,56 @@ router.get("/contacts", requireAdmin, async (req, res) => {
   res.json({ items });
 });
 
-// GET /api/admin/contacts/:id
-router.get("/contacts/:id", requireAdmin, async (req, res) => {
-  const item = await ContactMessage.findById(req.params.id);
-  if (!item) return res.status(404).json({ message: "Not found" });
-  res.json(item);
-});
-
-// PUT /api/admin/contacts/:id  { status }
+// PUT /api/admin/contacts/:id { status }
 router.put("/contacts/:id", requireAdmin, async (req, res) => {
   const next = String(req.body?.status || "").trim();
-  if (!ALLOWED_CONTACT_STATUS.has(next)) {
-    return res.status(400).json({ message: "Invalid status" });
-  }
+  if (!ALLOWED_CONTACT_STATUS.has(next)) return res.status(400).json({ message: "Invalid status" });
 
   const item = await ContactMessage.findById(req.params.id);
   if (!item) return res.status(404).json({ message: "Not found" });
 
   item.status = next;
   await item.save();
-
   res.json({ ok: true, item });
-});
-
-// DELETE /api/admin/contacts/:id
-router.delete("/contacts/:id", requireAdmin, async (req, res) => {
-  await ContactMessage.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
 });
 
 // POST /api/admin/contacts/:id/reply
 router.post("/contacts/:id/reply", requireAdmin, async (req, res) => {
-  const subject = String(req.body?.subject || "").trim();
-  const body = String(req.body?.body || req.body?.message || "").trim();
+  try {
+    const subject = String(req.body?.subject || "").trim();
+    const body = String(req.body?.body || req.body?.message || "").trim();
+    if (!body) return res.status(400).json({ message: "Reply message is required" });
 
-  if (!body)
-    return res.status(400).json({ message: "Reply message is required" });
+    const item = await ContactMessage.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Not found" });
 
-  const item = await ContactMessage.findById(req.params.id);
-  if (!item) return res.status(404).json({ message: "Not found" });
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: String(process.env.SMTP_SECURE || "true") === "true",
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: String(process.env.SMTP_SECURE || "true") === "true",
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+    const mailSubject = subject || "Përgjigje nga Sekretet";
 
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
-  const mailSubject = subject || "Përgjigje nga Sekretet";
+    await transporter.sendMail({
+      from,
+      to: item.email,
+      subject: mailSubject,
+      text: body,
+    });
 
-  await transporter.sendMail({
-    from,
-    to: item.email,
-    subject: mailSubject,
-    text: body,
-  });
+    item.status = "answered";
+    item.lastReplyAt = new Date();
+    item.lastReplySubject = mailSubject;
+    await item.save();
 
-  item.status = "answered";
-  item.lastReplyAt = new Date();
-  item.lastReplySubject = mailSubject;
-  await item.save();
-
-  res.json({ ok: true });
+    res.json({ ok: true });
+  } catch (e) {
+    // mos kthe HTML, kthe JSON
+    res.status(500).json({ message: "SMTP error", detail: String(e?.message || e) });
+  }
 });
 
 export default router;

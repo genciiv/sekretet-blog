@@ -6,8 +6,8 @@ import { requireAdmin } from "../middleware/adminAuth.js";
 const router = express.Router();
 
 // GET /api/admin/comments?status=pending|approved|rejected|all
-router.get("/admin/comments", requireAdmin, async (req, res) => {
-  const status = String(req.query.status || "").trim();
+router.get("/comments", requireAdmin, async (req, res) => {
+  const status = String(req.query.status || "all").trim();
 
   const filter = {};
   if (status && status !== "all") filter.status = status;
@@ -17,7 +17,7 @@ router.get("/admin/comments", requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/comments/:id  { status }
-router.patch("/admin/comments/:id", requireAdmin, async (req, res) => {
+router.patch("/comments/:id", requireAdmin, async (req, res) => {
   const next = String(req.body?.status || "").trim();
   const allowed = new Set(["pending", "approved", "rejected"]);
 

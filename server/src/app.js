@@ -18,17 +18,14 @@ app.use(morgan("dev"));
 // static uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// ✅ PUBLIC (p.sh. /api/posts, /api/comments etj)
+// ✅ PUBLIC
 app.use("/api", publicRoutes);
+app.use("/api", mediaRoutes); // public media: /api/media
 
-// ✅ ADMIN (p.sh. /api/admin/login, /api/admin/posts, /api/admin/contacts)
-app.use("/api", adminRoutes);
-
-// ✅ ADMIN COMMENTS (p.sh. /api/admin/comments)
-app.use("/api", adminCommentsRoutes);
-
-// ✅ MEDIA (p.sh. /api/admin/media dhe /api/media)
-app.use("/api", mediaRoutes);
+// ✅ ADMIN
+app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminCommentsRoutes); // /api/admin/comments
+app.use("/api/admin", mediaRoutes); // admin media: /api/admin/media
 
 // health
 app.get("/health", (req, res) => res.json({ ok: true }));
