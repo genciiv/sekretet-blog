@@ -10,7 +10,7 @@ router.get("/comments", requireAdmin, async (req, res) => {
   const status = String(req.query.status || "all").trim();
 
   const filter = {};
-  if (status && status !== "all") filter.status = status;
+  if (status !== "all") filter.status = status;
 
   const items = await Comment.find(filter).sort({ createdAt: -1 });
   res.json({ items });
@@ -28,7 +28,7 @@ router.patch("/comments/:id", requireAdmin, async (req, res) => {
   const item = await Comment.findByIdAndUpdate(
     req.params.id,
     { status: next },
-    { new: true },
+    { new: true }
   );
 
   if (!item) return res.status(404).json({ message: "Not found" });

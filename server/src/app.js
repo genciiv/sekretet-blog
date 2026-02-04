@@ -5,6 +5,8 @@ import morgan from "morgan";
 import path from "path";
 
 import publicRoutes from "./routes/public.js";
+import commentsRoutes from "./routes/comments.js";
+
 import adminRoutes from "./routes/admin.js";
 import adminCommentsRoutes from "./routes/adminComments.js";
 import mediaRoutes from "./routes/media.js";
@@ -20,12 +22,13 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ✅ PUBLIC
 app.use("/api", publicRoutes);
-app.use("/api", mediaRoutes); // public media: /api/media
+app.use("/api", commentsRoutes);
+app.use("/api", mediaRoutes);       // PUBLIC: /api/media
 
 // ✅ ADMIN
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);         // /api/admin/login, /api/admin/posts, /api/admin/contacts
 app.use("/api/admin", adminCommentsRoutes); // /api/admin/comments
-app.use("/api/admin", mediaRoutes); // admin media: /api/admin/media
+app.use("/api/admin", mediaRoutes);         // ADMIN: /api/admin/media  ✅ (ky ishte që mungonte)
 
 // health
 app.get("/health", (req, res) => res.json({ ok: true }));

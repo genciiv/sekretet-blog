@@ -14,12 +14,22 @@ router.get("/posts", async (req, res) => {
   res.json({ items });
 });
 
-// GET /api/posts/:slug (PUBLIC)
 router.get("/posts/:slug", async (req, res) => {
-  const post = await Post.findOne({ slug: req.params.slug, status: "published" });
+  const slug = String(req.params.slug || "").trim();
+
+  let post = await Post.findOne({ slug, status: "published" });
+
+  if (!post) {
+    post = await Post.findOne({
+      slug: { $regex: `^${slug}(-\\d+)?$`, $options: "i" },
+      status: "published",
+    });
+  }
+
   if (!post) return res.status(404).json({ message: "Not found" });
   res.json(post);
 });
+
 
 // POST /api/contact (PUBLIC)
 router.post("/contact", async (req, res) => {

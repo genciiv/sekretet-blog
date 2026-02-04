@@ -7,11 +7,10 @@ import nodemailer from "nodemailer";
 import Post from "../models/Post.js";
 import ContactMessage from "../models/ContactMessage.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
-import upload from "../utils/upload.js"; // nëse e përdor për post images; ndryshe hiqe
+import upload from "../utils/upload.js";
 
 const router = express.Router();
 
-// -------------------- ADMIN LOGIN --------------------
 // POST /api/admin/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
@@ -27,7 +26,6 @@ router.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-// -------------------- POSTS --------------------
 // GET /api/admin/posts
 router.get("/posts", requireAdmin, async (req, res) => {
   const items = await Post.find().sort({ updatedAt: -1 });
@@ -102,7 +100,7 @@ router.delete("/posts/:id", requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// -------------------- CONTACTS (ADMIN) --------------------
+// CONTACTS
 const ALLOWED_CONTACT_STATUS = new Set(["new", "answered", "closed"]);
 
 // GET /api/admin/contacts?status=all|new|answered|closed&q=...
@@ -125,16 +123,19 @@ router.get("/contacts", requireAdmin, async (req, res) => {
   res.json({ items });
 });
 
-// PUT /api/admin/contacts/:id { status }
+// PUT /api/admin/contacts/:id  { status }
 router.put("/contacts/:id", requireAdmin, async (req, res) => {
   const next = String(req.body?.status || "").trim();
-  if (!ALLOWED_CONTACT_STATUS.has(next)) return res.status(400).json({ message: "Invalid status" });
+  if (!ALLOWED_CONTACT_STATUS.has(next)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
 
   const item = await ContactMessage.findById(req.params.id);
   if (!item) return res.status(404).json({ message: "Not found" });
 
   item.status = next;
   await item.save();
+
   res.json({ ok: true, item });
 });
 
@@ -172,7 +173,6 @@ router.post("/contacts/:id/reply", requireAdmin, async (req, res) => {
 
     res.json({ ok: true });
   } catch (e) {
-    // mos kthe HTML, kthe JSON
     res.status(500).json({ message: "SMTP error", detail: String(e?.message || e) });
   }
 });

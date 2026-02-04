@@ -5,7 +5,7 @@ import Comment from "../models/Comment.js";
 
 const router = express.Router();
 
-// CREATE comment (public)
+// CREATE comment (public) -> POST /api/posts/:slug/comments
 router.post("/posts/:slug/comments", async (req, res) => {
   const { name, email, message } = req.body || {};
 
@@ -13,25 +13,22 @@ router.post("/posts/:slug/comments", async (req, res) => {
     return res.status(400).json({ message: "Missing fields" });
   }
 
-  if (!validator.isEmail(email)) {
+  if (!validator.isEmail(String(email))) {
     return res.status(400).json({ message: "Invalid email" });
   }
 
   await Comment.create({
     slug: req.params.slug,
-    name,
-    email,
-    message,
+    name: String(name).trim(),
+    email: String(email).trim(),
+    message: String(message).trim(),
     status: "pending",
   });
 
-  res.status(201).json({
-    ok: true,
-    message: "Koment në pritje aprovimi",
-  });
+  res.status(201).json({ ok: true, message: "Koment në pritje aprovimi" });
 });
 
-// GET approved comments (public)
+// GET approved comments (public) -> GET /api/posts/:slug/comments
 router.get("/posts/:slug/comments", async (req, res) => {
   const items = await Comment.find({
     slug: req.params.slug,

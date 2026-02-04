@@ -17,9 +17,7 @@ function normalize(m) {
 }
 
 /**
- * =========================
- * PUBLIC MEDIA
- * =========================
+ * PUBLIC
  * GET /api/media
  */
 router.get("/media", async (req, res) => {
@@ -28,50 +26,41 @@ router.get("/media", async (req, res) => {
 });
 
 /**
- * =========================
- * ADMIN MEDIA
- * =========================
+ * ADMIN
+ * GET /api/admin/media
+ * POST /api/admin/media
+ * DELETE /api/admin/media/:id
  */
-
-// GET /api/admin/media
 router.get("/media", requireAdmin, async (req, res) => {
   const items = await Media.find().sort({ createdAt: -1 });
   res.json({ items: items.map(normalize) });
 });
 
-// POST /api/admin/media (FormData: image)
-router.post(
-  "/media",
-  requireAdmin,
-  upload.single("image"),
-  async (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+router.post("/media", requireAdmin, upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const status = req.body.status === "published" ? "published" : "draft";
+  const status = req.body.status === "published" ? "published" : "draft";
 
-    // ✅ prano siç i dërgon client-i
-    const titleSq = req.body.titleSq || req.body.title_sq || "";
-    const titleEn = req.body.titleEn || req.body.title_en || "";
-    const place = req.body.place || "";
-    const tags = String(req.body.tags || "")
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+  const titleSq = req.body.titleSq || req.body.title_sq || "";
+  const titleEn = req.body.titleEn || req.body.title_en || "";
+  const place = req.body.place || "";
+  const tags = String(req.body.tags || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
 
-    const item = await Media.create({
-      url: `/uploads/${req.file.filename}`,
-      title_sq: titleSq,
-      title_en: titleEn,
-      place,
-      tags,
-      status,
-    });
+  const item = await Media.create({
+    url: `/uploads/${req.file.filename}`,
+    title_sq: titleSq,
+    title_en: titleEn,
+    place,
+    tags,
+    status,
+  });
 
-    res.status(201).json(normalize(item));
-  },
-);
+  res.status(201).json(normalize(item));
+});
 
-// DELETE /api/admin/media/:id
 router.delete("/media/:id", requireAdmin, async (req, res) => {
   await Media.findByIdAndDelete(req.params.id);
   res.json({ ok: true });
