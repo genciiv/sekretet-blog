@@ -32,18 +32,21 @@ const PARTNERS = [
     nameEn: "Fier Municipality",
     descSq: "Përshkrimi do shtohet më vonë.",
     descEn: "Description will be added later.",
+    logo: "/logos/stema.png"
   },
   {
     nameSq: "ZVAP Fier",
     nameEn: "ZVAP Fier",
     descSq: "Përshkrimi do shtohet më vonë.",
     descEn: "Description will be added later.",
+    logo: "/logos/zvrp.png"
   },
   {
     nameSq: "Komuniteti",
     nameEn: "Community",
     descSq: "Përshkrimi do shtohet më vonë.",
     descEn: "Description will be added later.",
+    logo: "/logos/fier.png"
   },
 ];
 
@@ -175,7 +178,9 @@ export default function Home() {
   const desc = isSQ
     ? "Shteg turistik-kulturor Levan – Shtyllas – Apolloni, me histori, antikitet, galeri dhe hartë interaktive."
     : "A cultural route connecting Levan – Shtyllas – Apollonia, with stories, antiquity, gallery and an interactive map.";
-
+const desc2 = isSQ
+  ? "Një eksperiencë kulturore që lidh natyrën me historinë."
+  : "A cultural experience connecting nature with history.";
   // Postimet (published)
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -221,95 +226,104 @@ export default function Home() {
     }
   }
 
+  //----- Ardit Code Change --- (Image carusel) 
+
+function ImageCarousel() {
+const images = [
+  "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80",
+];
+
+const [index, setIndex] = useState(0);
+
+function prev() {
+  setIndex((i) => (i === 0 ? images.length - 1 : i - 1));
+}
+
+function next() {
+  setIndex((i) => (i === images.length - 1 ? 0 : i + 1));
+}
+
+return (
+  <div className="relative w-full h-[420px]"> {/* match map height */}
+
+    {/* Image */}
+    <img
+      src={images[index]}
+      alt="Gallery"
+      className="w-full h-full object-cover rounded-2xl transition-opacity duration-300"
+    />
+
+    {/* Left Arrow */}
+    <button
+      onClick={prev}
+      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 text-white w-9 h-9 rounded-full hover:bg-black/60 transition"
+    >
+      ‹
+    </button>
+
+    {/* Right Arrow */}
+    <button
+      onClick={next}
+      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white w-9 h-9 rounded-full hover:bg-black/60 transition"
+    >
+      ›
+    </button>
+
+    {/* Dots */}
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      {images.map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setIndex(i)}
+          className={`h-2.5 w-2.5 rounded-full transition ${
+            i === index ? "bg-white" : "bg-white/40"
+          }`}
+        />
+      ))}
+    </div>
+  </div>
+);
+}
+
   return (
-    <main>
+    <main className="font-sans bg-white text-zinc-900">
       <SEO title={title} description={desc} lang={lang} />
+  {/* HERO */}
+  <section className="border-b border-zinc-200">
+    <div className="mx-auto max-w-5xl px-6 py-24 text-center">
 
-      {/* HERO */}
-      <div className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="grid gap-10 md:grid-cols-2 md:items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-700">
-                <span className="h-2 w-2 rounded-full bg-zinc-900" />
-                {isSQ ? "Turizëm & Kulturë" : "Tourism & Culture"}
-              </div>
-
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-                {title}
-              </h1>
-
-              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">{desc}</p>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/trail" className="btn btn-primary">
-                  {isSQ ? "Shiko Shtegun" : "Explore Trail"}
-                </Link>
-                <Link to="/antiquity" className="btn btn-outline">
-                  {isSQ ? "Antikiteti" : "Antiquity"}
-                </Link>
-                <Link to="/map" className="btn btn-outline">
-                  {isSQ ? "Harta" : "Map"}
-                </Link>
-              </div>
-
-              <div className="mt-7 grid max-w-xl grid-cols-3 gap-3">
-                <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">Shteg</div>
-                  <div className="text-xs text-zinc-600">
-                    {isSQ ? "Levan–Shtyllas–Apolloni" : "Levan–Shtyllas–Apollonia"}
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">
-                    {isSQ ? "Antikitet" : "Antiquity"}
-                  </div>
-                  <div className="text-xs text-zinc-600">
-                    {isSQ ? "Pika & periudha" : "Places & periods"}
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">
-                    {isSQ ? "Harta" : "Map"}
-                  </div>
-                  <div className="text-xs text-zinc-600">
-                    {isSQ ? "Interaktive" : "Interactive"}
-                  </div>
-                </Card>
-              </div>
-            </div>
-
-            {/* Hero image */}
-            <div className="relative">
-              <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 shadow-sm">
-                <img
-                  src={MAP_PREVIEW_IMG}
-                  alt="Preview"
-                  className="h-[320px] w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">Apollonia</div>
-                  <div className="mt-1 text-xs text-zinc-600">
-                    {isSQ ? "Park arkeologjik" : "Archaeological park"}
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="text-sm font-semibold text-zinc-900">Bylis</div>
-                  <div className="mt-1 text-xs text-zinc-600">
-                    {isSQ ? "Qytet antik" : "Ancient city"}
-                  </div>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-xs tracking-wide text-zinc-600">
+        <span className="h-2 w-2 rounded-full bg-zinc-900" />
+        {isSQ ? "Turizëm & Kulturë" : "Tourism & Culture"}
       </div>
 
-      {/* SHTEGU */}
+      <h1 className="mt-8 font-serif text-5xl leading-tight tracking-tight md:text-6xl">
+        {title}
+      </h1>
+
+      <p className="mx-auto mt-6 max-w-2xl text-xl font-light leading-relaxed text-zinc-600">
+        {desc2}
+      </p>
+
+      <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <Link to="/trail" className="btn btn-primary">
+          {isSQ ? "Shiko Shtegun" : "Explore Trail"}
+        </Link>
+        <Link to="/antiquity" className="btn btn-outline">
+          {isSQ ? "Antikiteti" : "Antiquity"}
+        </Link>
+        <Link to="/map" className="btn btn-outline">
+          {isSQ ? "Harta" : "Map"}
+        </Link>
+      </div>
+
+    </div>
+  </section>
+
+
+      {/* SHTEGU
       <Section
         title={isSQ ? "Shtegu" : "Trail"}
         subtitle={
@@ -345,9 +359,9 @@ export default function Home() {
             {isSQ ? "Shiko Shtegun" : "Explore Trail"}
           </Link>
         </div>
-      </Section>
+      </Section> */}
 
-      {/* ANTIKITETI */}
+      {/* ANTIKITETI
       <Section
         title={isSQ ? "Antikiteti" : "Antiquity"}
         subtitle={
@@ -463,7 +477,7 @@ export default function Home() {
             </Card>
           </>
         )}
-      </Section>
+      </Section> */}
 
       {/* HARTA (Ballina) */}
       <Section
@@ -475,7 +489,7 @@ export default function Home() {
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
           <MapView />
 
-          <Card className="overflow-hidden">
+          {/* <Card className="overflow-hidden">
             <img
               src={MAP_PREVIEW_IMG}
               alt="Route preview"
@@ -505,7 +519,10 @@ export default function Home() {
                 {isSQ ? "Tip: Përdor zoom dhe kliko pikat." : "Tip: Use zoom and click markers."}
               </div>
             </div>
-          </Card>
+          </Card> */}
+          <Card className="overflow-hidden">
+            <ImageCarousel />
+         </Card>
         </div>
       </Section>
 
@@ -514,24 +531,38 @@ export default function Home() {
         title={isSQ ? "Partnerët" : "Partners"}
         subtitle={
           isSQ
-            ? "Institucione dhe bashkëpunëtorë (placeholder)."
-            : "Institutions and collaborators (placeholder)."
+            ? "Institucione dhe bashkëpunëtorë ."
+            : "Institutions and collaborators ."
         }
       >
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-10 items-center text-center">
           {PARTNERS.map((p) => (
-            <Card key={p.nameSq} className="p-6">
-              <div className="text-sm font-semibold text-zinc-900">
+            <Card key={p.nameSq} className="p-8 flex flex-col items-center gap-4">
+
+              {/* Logo */}
+              {p.logo && (
+                <img
+                  src={p.logo}
+                  alt={isSQ ? p.nameSq : p.nameEn}
+                  className="h-14 object-contain grayscale hover:grayscale-0 transition duration-300"
+                />
+              )}
+
+              {/* Name */}
+              <div className="text-sm font-medium text-zinc-900">
                 {isSQ ? p.nameSq : p.nameEn}
               </div>
-              <div className="mt-2 text-sm text-zinc-600">
+
+              {/* Description */}
+              <div className="text-sm text-zinc-600">
                 {isSQ ? p.descSq : p.descEn}
               </div>
+
             </Card>
-          ))}
+              ))}
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-12 flex justify-center gap-4">
           <Link to="/contact" className="btn btn-primary">
             {isSQ ? "Kontakto" : "Contact"}
           </Link>
@@ -542,6 +573,7 @@ export default function Home() {
           </Link>
         </div>
       </Section>
+      
     </main>
   );
 }
